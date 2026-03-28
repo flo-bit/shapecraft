@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import * as THREE from 'three'
-import { box, sphere, cylinder, plane, cone, torus } from '../src/primitives'
+import { box, sphere, cylinder, plane, cone, torus, icosphere } from '../src/primitives'
 
 describe('primitives', () => {
   it('box returns a Mesh with correct defaults', () => {
@@ -59,5 +59,12 @@ describe('primitives', () => {
   it('torus returns a Mesh', () => {
     const t = torus()
     expect(t.vertexCount).toBeGreaterThan(0)
+  })
+
+  it('icosphere returns a Mesh with uniform triangles', () => {
+    const i0 = icosphere({ subdivisions: 0 })
+    expect(i0.vertexCount).toBeGreaterThan(0)
+    const i2 = icosphere({ subdivisions: 2 })
+    expect(i2.vertexCount).toBeGreaterThan(i0.vertexCount)
   })
 })

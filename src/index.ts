@@ -3,7 +3,7 @@ export { Mesh } from './mesh'
 export type { Vec2, Vec3, Vec4, ColorInput, ColorFn, DisplaceFn, WarpFn, NoiseLike } from './types'
 
 // Primitives
-export { box, sphere, cylinder, plane, cone, torus } from './primitives'
+export { box, sphere, cylinder, plane, cone, torus, icosphere } from './primitives'
 
 // Operations
 export { merge, center, clone } from './ops'

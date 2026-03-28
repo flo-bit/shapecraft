@@ -10,7 +10,14 @@ export function merge(...meshes: Mesh[]): Mesh {
     return meshes[0].clone()
   }
 
-  const geometries = meshes.map(m => m.geometry.clone())
+  let geometries = meshes.map(m => m.geometry.clone())
+
+  // Normalize indexed/non-indexed: if mixed, convert all to non-indexed
+  const hasIndexed = geometries.some(g => g.getIndex() !== null)
+  const hasNonIndexed = geometries.some(g => g.getIndex() === null)
+  if (hasIndexed && hasNonIndexed) {
+    geometries = geometries.map(g => g.getIndex() ? g.toNonIndexed() : g)
+  }
 
   // Normalize attributes: if any geometry has an attribute, all must have it
   const hasColors = geometries.some(g => g.getAttribute('color'))

@@ -143,24 +143,37 @@ export class Mesh {
   }
 
   /**
-   * Offset each vertex by a random amount, using position-based noise
-   * so vertices at the same position get the same offset (preserving watertight meshes).
-   * amount controls the max displacement per axis. scale controls the noise frequency.
+   * Offset each vertex by a random amount. Deterministic: same seed + same geometry = same result.
+   * Vertices at the same position get the same offset (preserving watertight meshes).
    */
-  jitter(amount: number, options?: { scale?: number; seed?: number }): Mesh {
+  jitter(amount: number, options?: { seed?: number }): Mesh {
     const geo = cloneGeometry(this.geometry)
     const pos = geo.getAttribute('position')
-    const scale = options?.scale ?? 1000
     const seed = options?.seed ?? 0
 
-    // Use three offset noise samples (one per axis) based on position
-    // Simple hash: sin-based pseudo-noise, deterministic per position
+    // Build cache: same position → same offset. Key = quantized position string.
+    const cache = new Map<string, [number, number, number]>()
+    // Seeded PRNG (simple LCG)
+    let s = (seed * 2654435761 + 1) >>> 0 || 1
+    function rand(): number {
+      s = (s * 16807 + 0) % 2147483647
+      return ((s & 0x7fffffff) / 2147483647) * 2 - 1
+    }
+
+    // Quantize to avoid floating-point key mismatches (6 decimal places)
+    function key(x: number, y: number, z: number): string {
+      return `${Math.round(x * 1e6)}:${Math.round(y * 1e6)}:${Math.round(z * 1e6)}`
+    }
+
     for (let i = 0; i < pos.count; i++) {
       const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i)
-      const dx = fract(Math.sin((x * scale + y * 317.2 + z * 491.7 + seed) * 43758.5453)) * 2 - 1
-      const dy = fract(Math.sin((x * 127.1 + y * scale + z * 269.3 + seed + 1) * 43758.5453)) * 2 - 1
-      const dz = fract(Math.sin((x * 373.9 + y * 156.7 + z * scale + seed + 2) * 43758.5453)) * 2 - 1
-      pos.setXYZ(i, x + dx * amount, y + dy * amount, z + dz * amount)
+      const k = key(x, y, z)
+      let offset = cache.get(k)
+      if (!offset) {
+        offset = [rand() * amount, rand() * amount, rand() * amount]
+        cache.set(k, offset)
+      }
+      pos.setXYZ(i, x + offset[0], y + offset[1], z + offset[2])
     }
 
     pos.needsUpdate = true

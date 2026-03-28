@@ -1,172 +1,125 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { toThreeMesh } from '../src/three'
-import type { Mesh } from '../src'
+import { plane, icosphere } from '../src'
+import { fbm } from '../src/noise'
+import { heightGradient } from '../src/color'
+import { tree } from './generators/tree'
 
-import { pineTree } from './generators/vegetation/pine-tree'
-import { oakTree } from './generators/vegetation/oak-tree'
-import { palmTree } from './generators/vegetation/palm-tree'
-import { birchTree } from './generators/vegetation/birch-tree'
-import { bush } from './generators/vegetation/bush'
-import { flower } from './generators/vegetation/flower'
-import { grassClump } from './generators/vegetation/grass-clump'
-import { cactus } from './generators/vegetation/cactus'
-import { mushroom } from './generators/vegetation/mushroom'
-import { fern } from './generators/vegetation/fern'
-import { deadTree } from './generators/vegetation/dead-tree'
-import { willowTree } from './generators/vegetation/willow-tree'
-import { bamboo } from './generators/vegetation/bamboo'
-import { cattail } from './generators/vegetation/cattail'
-import { stump } from './generators/vegetation/stump'
-import { log } from './generators/vegetation/log'
-import { mossyRock } from './generators/vegetation/mossy-rock'
-import { vine } from './generators/vegetation/vine'
-import { topiary } from './generators/vegetation/topiary'
-import { succulent } from './generators/vegetation/succulent'
-
-const scene = new THREE.Scene()
-scene.background = new THREE.Color(0x2a2a3a)
-
-const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 200)
-camera.position.set(12, 12, 26)
-
+// --- Renderer ---
 const renderer = new THREE.WebGLRenderer({ antialias: true })
 renderer.setSize(window.innerWidth, window.innerHeight)
 renderer.setPixelRatio(window.devicePixelRatio)
+renderer.shadowMap.enabled = true
+renderer.shadowMap.type = THREE.PCFSoftShadowMap
+renderer.toneMapping = THREE.ACESFilmicToneMapping
+renderer.toneMappingExposure = 1.1
 document.body.appendChild(renderer.domElement)
 
+// --- Scene ---
+const scene = new THREE.Scene()
+
+// --- Sky dome — vertex-colored hemisphere ---
+const skyMesh = icosphere({ radius: 50, subdivisions: 3 })
+  .vertexColor((pos) => {
+    const t = Math.max(0, pos[1] / 50) // 0 at horizon, 1 at zenith
+    // Horizon: warm haze → zenith: deeper blue
+    return [
+      0.55 + (0.2 - 0.55) * t,
+      0.7 + (0.35 - 0.7) * t,
+      0.85 + (0.65 - 0.85) * t,
+    ]
+  })
+const sky = toThreeMesh(skyMesh, {
+  material: new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.BackSide }),
+})
+scene.add(sky)
+
+// --- Fog ---
+scene.fog = new THREE.FogExp2(0x8eb3d9, 0.025)
+
+// --- Camera ---
+const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 200)
+camera.position.set(4, 3, 8)
+
 const controls = new OrbitControls(camera, renderer.domElement)
-controls.target.set(12, 0, 8)
+controls.target.set(0, 1, 0)
+controls.enableDamping = true
+controls.dampingFactor = 0.08
+controls.maxPolarAngle = Math.PI / 2 - 0.05 // don't go below ground
 controls.update()
 
-scene.add(new THREE.AmbientLight(0x707070))
-const dir = new THREE.DirectionalLight(0xffffff, 1.0)
-dir.position.set(8, 15, 10)
-scene.add(dir)
-const dir2 = new THREE.DirectionalLight(0xffffff, 0.4)
-dir2.position.set(-5, 8, -3)
-scene.add(dir2)
+// --- Lighting ---
+// Hemisphere light: sky blue from above, ground green from below
+const hemi = new THREE.HemisphereLight(0x87ceeb, 0x3a5a2a, 0.6)
+scene.add(hemi)
 
-const ground = new THREE.Mesh(
-  new THREE.PlaneGeometry(60, 60),
-  new THREE.MeshStandardMaterial({ color: 0x3a5a3a })
-)
-ground.rotation.x = -Math.PI / 2
-ground.position.set(12, 0, 12)
-scene.add(ground)
+// Sun
+const sun = new THREE.DirectionalLight(0xfff4e0, 1.4)
+sun.position.set(8, 12, 5)
+sun.castShadow = true
+sun.shadow.mapSize.set(2048, 2048)
+sun.shadow.camera.left = -15
+sun.shadow.camera.right = 15
+sun.shadow.camera.top = 15
+sun.shadow.camera.bottom = -15
+sun.shadow.camera.near = 0.5
+sun.shadow.camera.far = 40
+sun.shadow.bias = -0.001
+scene.add(sun)
 
-function add(mesh: Mesh, x: number, z: number) {
-  const obj = toThreeMesh(mesh)
-  obj.position.set(x, 0, z)
+// Soft fill from opposite side
+const fill = new THREE.DirectionalLight(0xb0c4de, 0.3)
+fill.position.set(-5, 4, -3)
+scene.add(fill)
+
+// --- Ground — noise-displaced plane with height coloring ---
+const groundNoise = fbm({ seed: 7, octaves: 3, scale: 0.15, min: 0, max: 0.3 })
+const groundMesh = plane({ size: 30, segments: 60 })
+  .displace((pos) => groundNoise.get(pos[0], pos[2]))
+  .vertexColor(heightGradient([
+    [-0.05, [0.25, 0.38, 0.12]],
+    [0.1, [0.3, 0.45, 0.15]],
+    [0.25, [0.35, 0.42, 0.18]],
+  ]))
+const groundObj = toThreeMesh(groundMesh)
+groundObj.receiveShadow = true
+scene.add(groundObj)
+
+// --- Trees — scattered naturally ---
+let rngSeed = 42
+function rng() { rngSeed = (rngSeed * 16807) % 2147483647; return (rngSeed & 0x7fffffff) / 2147483647 }
+
+for (let i = 0; i < 18; i++) {
+  const x = (rng() - 0.5) * 20
+  const z = (rng() - 0.5) * 20
+  const dist = Math.sqrt(x * x + z * z)
+  if (dist < 1.5) continue // keep center clear
+
+  const h = 1.8 + rng() * 1.5
+  const t = tree({ seed: i + 1, height: h, canopyRadius: 0.5 + rng() * 0.5 })
+  const obj = toThreeMesh(t)
+
+  // Sample ground height at this position
+  const groundY = groundNoise.get(x, z)
+  obj.position.set(x, groundY, z)
+  obj.castShadow = true
+  obj.receiveShadow = true
   scene.add(obj)
 }
 
-// Label helper — simple text sprites (skip, just use grid positions)
-// Grid: 5 columns, each asset gets a "cell" with main + variations side by side
-// Column spacing 5, row spacing 5, variations offset 1.5 within cell
+// Expose for screenshot scripts
+;(window as any).__camera = camera
+;(window as any).__controls = controls
 
-const colW = 5
-const rowH = 5
-
-// ── Row 0: Trees (tall) ──────────────────────────
-
-// 1. Pine tree — small, medium, large
-add(pineTree({ height: 1.5, seed: 1 }), 0, 0)
-add(pineTree({ height: 2.5, seed: 2 }), 1.5, 0)
-add(pineTree({ height: 3.5, layers: 5, seed: 3 }), 3, 0)
-
-// 2. Oak tree — variations
-add(oakTree({ height: 2, seed: 1 }), colW, 0)
-add(oakTree({ height: 3, canopySize: 1.5, seed: 7 }), colW + 2, 0)
-
-// 3. Palm tree
-add(palmTree({ height: 2.5, seed: 1 }), colW * 2, 0)
-add(palmTree({ height: 3.5, lean: 0.25, fronds: 9, seed: 5 }), colW * 2 + 2, 0)
-
-// 4. Birch tree
-add(birchTree({ height: 2.2, seed: 1 }), colW * 3, 0)
-add(birchTree({ height: 3, seed: 10 }), colW * 3 + 2, 0)
-
-// 5. Willow tree
-add(willowTree({ height: 2.2, seed: 1 }), colW * 4, 0)
-add(willowTree({ height: 3, seed: 5 }), colW * 4 + 2, 0)
-
-// ── Row 1: More trees & structural ──────────────
-
-// 6. Dead tree
-add(deadTree({ height: 1.8, branches: 3, seed: 1 }), 0, rowH)
-add(deadTree({ height: 2.5, branches: 6, seed: 4 }), 2, rowH)
-
-// 7. Bamboo
-add(bamboo({ stalks: 3, height: 1.5, seed: 1 }), colW, rowH)
-add(bamboo({ stalks: 7, height: 2.5, seed: 3 }), colW + 2, rowH)
-
-// 8. Vine
-add(vine({ height: 1.5, tendrils: 3, seed: 1 }), colW * 2, rowH)
-add(vine({ height: 2, tendrils: 6, seed: 4 }), colW * 2 + 2, rowH)
-
-// 9. Topiary — three shapes
-add(topiary({ shape: 'sphere', height: 1, seed: 1 }), colW * 3, rowH)
-add(topiary({ shape: 'cone', height: 1.3, seed: 1 }), colW * 3 + 1.5, rowH)
-add(topiary({ shape: 'spiral', height: 1.5, seed: 1 }), colW * 3 + 3, rowH)
-
-// 10. Cactus
-add(cactus({ height: 1, arms: 1, seed: 1 }), colW * 4, rowH)
-add(cactus({ height: 1.5, arms: 3, seed: 3 }), colW * 4 + 2, rowH)
-
-// ── Row 2: Ground cover ─────────────────────────
-
-// 11. Bush — size and color variations
-add(bush({ size: 0.4, seed: 1 }), 0, rowH * 2)
-add(bush({ size: 0.7, seed: 2 }), 1.5, rowH * 2)
-add(bush({ size: 0.5, color: [0.35, 0.25, 0.1], seed: 3 }), 3, rowH * 2)  // autumn
-
-// 12. Fern
-add(fern({ size: 0.6, fronds: 5, seed: 1 }), colW, rowH * 2)
-add(fern({ size: 1, fronds: 9, seed: 3 }), colW + 2, rowH * 2)
-
-// 13. Grass clump
-add(grassClump({ blades: 8, height: 0.2, seed: 1 }), colW * 2, rowH * 2)
-add(grassClump({ blades: 18, height: 0.4, spread: 0.2, seed: 3 }), colW * 2 + 1.5, rowH * 2)
-
-// 14. Cattail
-add(cattail({ stalks: 4, height: 0.8, seed: 1 }), colW * 3, rowH * 2)
-add(cattail({ stalks: 8, height: 1.4, seed: 5 }), colW * 3 + 1.5, rowH * 2)
-
-// 15. Flower — color variations
-add(flower({ petalColor: [0.9, 0.2, 0.3], seed: 1 }), colW * 4, rowH * 2)        // red
-add(flower({ petalColor: [0.95, 0.85, 0.2], petals: 8, seed: 2 }), colW * 4 + 1, rowH * 2)  // yellow
-add(flower({ petalColor: [0.6, 0.3, 0.8], petals: 6, seed: 3 }), colW * 4 + 2, rowH * 2)  // purple
-
-// ── Row 3: Props ────────────────────────────────
-
-// 16. Mushroom — color/size variations
-add(mushroom({ capColor: [0.7, 0.15, 0.1], seed: 1 }), 0, rowH * 3)                      // red
-add(mushroom({ capColor: [0.85, 0.75, 0.5], capRadius: 0.08, height: 0.2, seed: 2 }), 1.2, rowH * 3) // beige small
-add(mushroom({ capColor: [0.5, 0.3, 0.15], capRadius: 0.18, height: 0.35, seed: 3 }), 2.6, rowH * 3) // brown big
-
-// 17. Stump
-add(stump({ radius: 0.15, height: 0.15, seed: 1 }), colW, rowH * 3)
-add(stump({ radius: 0.3, height: 0.35, seed: 5 }), colW + 1.5, rowH * 3)
-
-// 18. Log
-add(log({ length: 0.6, radius: 0.08, seed: 1 }), colW * 2, rowH * 3)
-add(log({ length: 1.2, radius: 0.15, seed: 3 }), colW * 2 + 2, rowH * 3)
-
-// 19. Mossy rock
-add(mossyRock({ size: 0.2, seed: 1 }), colW * 3, rowH * 3)
-add(mossyRock({ size: 0.4, mossAmount: 0.8, seed: 3 }), colW * 3 + 1.5, rowH * 3)
-
-// 20. Succulent
-add(succulent({ size: 0.2, seed: 1 }), colW * 4, rowH * 3)
-add(succulent({ size: 0.3, layers: 4, seed: 5 }), colW * 4 + 1.5, rowH * 3)
-
+// --- Resize ---
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight
   camera.updateProjectionMatrix()
   renderer.setSize(window.innerWidth, window.innerHeight)
 })
 
+// --- Animate ---
 function animate() {
   requestAnimationFrame(animate)
   controls.update()
