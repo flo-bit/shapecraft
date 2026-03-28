@@ -4,17 +4,34 @@
 
 <script>
   async function init() {
-    const { setupScene } = await import('./scene-setup')
-    const { plane, icosphere, merge, tube, createRng } = await import('../../src')
-    const { fbm } = await import('../../src/noise')
-    const { heightGradient, normalGradient } = await import('../../src/color')
-    const { toThreeMesh } = await import('../../src/three')
+    const THREE = await import('three')
+    const { OrbitControls } = await import('three/examples/jsm/controls/OrbitControls.js')
+    const { plane, icosphere, merge, tube, createRng } = await import('shapecraft')
+    const { fbm } = await import('shapecraft/noise')
+    const { heightGradient, normalGradient } = await import('shapecraft/color')
+    const { toThreeMesh } = await import('shapecraft/three')
 
-    const ctx = await setupScene('patterns-demo', { cameraPos: [6, 5, 8], target: [0, 0.5, 0] })
-    if (!ctx) return
+    const canvas = document.getElementById('patterns-demo') as HTMLCanvasElement
+    if (!canvas) return
+
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true })
+    renderer.setSize(canvas.clientWidth, canvas.clientHeight)
+    const scene = new THREE.Scene()
+    scene.background = new THREE.Color(0x2a2a3a)
+    const camera = new THREE.PerspectiveCamera(55, canvas.clientWidth / canvas.clientHeight, 0.1, 100)
+    camera.position.set(6, 5, 8)
+    const controls = new OrbitControls(camera, canvas)
+    controls.target.set(0, 0.5, 0)
+    controls.enableDamping = true
+    controls.update()
+
+    scene.add(new THREE.HemisphereLight(0x87ceeb, 0x3a5a2a, 0.6))
+    const sun = new THREE.DirectionalLight(0xfff4e0, 1.2)
+    sun.position.set(5, 8, 5)
+    scene.add(sun)
 
     const terrainNoise = fbm({ seed: 7, scale: 0.2, octaves: 3 })
-    ctx.scene.add(toThreeMesh(
+    scene.add(toThreeMesh(
       plane({ size: 12, segments: 40 })
         .displaceNoise(terrainNoise, 0.5)
         .vertexColor(heightGradient([
@@ -30,21 +47,23 @@
       const z = (rand() - 0.5) * 8
       const h = 1 + rand() * 1.5
       const r = 0.3 + rand() * 0.3
-
       const trunk = tube(
-        [[0,0,0],[0,h*0.4,0]], (t) => 0.04 * (1 - t * 0.5), 5
+        [[0,0,0],[0,h*0.4,0]], (t: number) => 0.04 * (1 - t * 0.5), 5
       ).vertexColor('#4a2815')
-
       const canopy = icosphere({ radius: r, subdivisions: 1 })
         .scale(1, 0.8, 1).jitter(r * 0.08, { seed: i })
         .translate(0, h * 0.5, 0)
         .faceColor(normalGradient([0.2, 0.5, 0.1], [0.1, 0.3, 0.05]))
-
       const obj = toThreeMesh(merge(trunk, canopy))
       obj.position.set(x, terrainNoise.get(x, z), z)
-      obj.castShadow = true
-      ctx.scene.add(obj)
+      scene.add(obj)
     }
+
+    ;(function animate() {
+      requestAnimationFrame(animate)
+      controls.update()
+      renderer.render(scene, camera)
+    })()
   }
   init()
 </script>

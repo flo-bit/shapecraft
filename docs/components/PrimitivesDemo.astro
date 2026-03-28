@@ -4,12 +4,29 @@
 
 <script>
   async function init() {
-    const { setupScene } = await import('./scene-setup')
-    const { box, sphere, cylinder, cone, icosphere, torus } = await import('../../src')
-    const { toThreeMesh } = await import('../../src/three')
+    const THREE = await import('three')
+    const { OrbitControls } = await import('three/examples/jsm/controls/OrbitControls.js')
+    const { box, sphere, cylinder, cone, icosphere, torus } = await import('shapecraft')
+    const { toThreeMesh } = await import('shapecraft/three')
 
-    const ctx = await setupScene('primitives-demo', { cameraPos: [6, 4, 8], target: [3, 0.5, 0] })
-    if (!ctx) return
+    const canvas = document.getElementById('primitives-demo') as HTMLCanvasElement
+    if (!canvas) return
+
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true })
+    renderer.setSize(canvas.clientWidth, canvas.clientHeight)
+    const scene = new THREE.Scene()
+    scene.background = new THREE.Color(0x2a2a3a)
+    const camera = new THREE.PerspectiveCamera(50, canvas.clientWidth / canvas.clientHeight, 0.1, 100)
+    camera.position.set(6, 4, 8)
+    const controls = new OrbitControls(camera, canvas)
+    controls.target.set(3, 0.5, 0)
+    controls.enableDamping = true
+    controls.update()
+
+    scene.add(new THREE.HemisphereLight(0x87ceeb, 0x3a5a2a, 0.6))
+    const sun = new THREE.DirectionalLight(0xfff4e0, 1.2)
+    sun.position.set(5, 8, 5)
+    scene.add(sun)
 
     const primitives = [
       box().vertexColor('#cc8844'),
@@ -20,8 +37,14 @@
       torus().vertexColor('#aa44cc'),
     ]
     primitives.forEach((m, i) => {
-      ctx.scene.add(toThreeMesh(m.translate(i * 1.5, 0.5, 0)))
+      scene.add(toThreeMesh(m.translate(i * 1.5, 0.5, 0)))
     })
+
+    ;(function animate() {
+      requestAnimationFrame(animate)
+      controls.update()
+      renderer.render(scene, camera)
+    })()
   }
   init()
 </script>

@@ -4,52 +4,70 @@
 
 <script>
   async function init() {
-    const { setupScene } = await import('./scene-setup')
-    const { tube, loft, thicken } = await import('../../src')
-    const { toThreeMesh } = await import('../../src/three')
+    const THREE = await import('three')
+    const { OrbitControls } = await import('three/examples/jsm/controls/OrbitControls.js')
+    const { tube, loft, thicken } = await import('shapecraft')
+    const { toThreeMesh } = await import('shapecraft/three')
 
-    const ctx = await setupScene('loft-demo', { cameraPos: [3, 3, 5], target: [0, 1, 0] })
-    if (!ctx) return
+    const canvas = document.getElementById('loft-demo') as HTMLCanvasElement
+    if (!canvas) return
 
-    // Tapered branch
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true })
+    renderer.setSize(canvas.clientWidth, canvas.clientHeight)
+    const scene = new THREE.Scene()
+    scene.background = new THREE.Color(0x2a2a3a)
+    const camera = new THREE.PerspectiveCamera(50, canvas.clientWidth / canvas.clientHeight, 0.1, 100)
+    camera.position.set(3, 3, 5)
+    const controls = new OrbitControls(camera, canvas)
+    controls.target.set(0, 1, 0)
+    controls.enableDamping = true
+    controls.update()
+
+    scene.add(new THREE.HemisphereLight(0x87ceeb, 0x3a5a2a, 0.6))
+    const sun = new THREE.DirectionalLight(0xfff4e0, 1.2)
+    sun.position.set(5, 8, 5)
+    scene.add(sun)
+
     const branchPath = Array.from({ length: 10 }, (_, i) => {
       const t = i / 9
       return [Math.sin(t * 2) * 0.5, t * 2, Math.cos(t * 3) * 0.3] as [number, number, number]
     })
-    ctx.scene.add(toThreeMesh(
-      tube(branchPath, (t) => 0.08 * (1 - t * 0.8), 5)
+    scene.add(toThreeMesh(
+      tube(branchPath, (t: number) => 0.08 * (1 - t * 0.8), 5)
         .translate(-1.5, 0, 0).vertexColor('#8B6B4A')
     ))
 
-    // Lofted leaf
     const leafPath = Array.from({ length: 8 }, (_, i) => {
       const t = i / 7
       return [0, t * 1.5 + 0.3, -t * 0.3] as [number, number, number]
     })
     const leaf = loft({
       path: leafPath,
-      shape: (t) => {
+      shape: (t: number) => {
         const w = 0.25 * Math.sin(t * Math.PI) * (1 - t * 0.3)
-        return [[w, 0.02], [0, 0.06], [-w, 0.02], [-w, -0.01], [0, -0.02], [w, -0.01]]
+        return [[w, 0.02], [0, 0.06], [-w, 0.02], [-w, -0.01], [0, -0.02], [w, -0.01]] as [number,number][]
       },
-      closedShape: true,
-      closed: false,
-      up: [0, 0, 1],
+      closedShape: true, closed: false, up: [0, 0, 1],
     }).vertexColor('#3a7a2a')
-    ctx.scene.add(toThreeMesh(thicken(leaf, 0.01)))
+    scene.add(toThreeMesh(thicken(leaf, 0.01)))
 
-    // Wavy trunk
     const trunkPath = Array.from({ length: 15 }, (_, i) => {
       const t = i / 14
       return [1.5 + Math.sin(t * 4) * 0.15, t * 2, 0] as [number, number, number]
     })
-    ctx.scene.add(toThreeMesh(
-      tube(trunkPath, (t) => {
+    scene.add(toThreeMesh(
+      tube(trunkPath, (t: number) => {
         const taper = 0.1 * (1 - t * 0.5)
         const wave = 1 + Math.sin(t * Math.PI * 10) * 0.12
         return taper * wave
       }, 5).vertexColor('#6a5030')
     ))
+
+    ;(function animate() {
+      requestAnimationFrame(animate)
+      controls.update()
+      renderer.render(scene, camera)
+    })()
   }
   init()
 </script>

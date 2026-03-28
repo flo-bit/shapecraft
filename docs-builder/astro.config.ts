@@ -32,13 +32,17 @@ import fixLinks from "./transform-links";
 export default defineConfig({
   vite: {
     resolve: {
-      alias: {
-        $components: resolve("./src/components"),
-        $layouts: resolve("./src/layouts"),
-        $pages: resolve("./src/pages"),
-        $assets: resolve("./src/assets"),
-        $content: resolve("./src/content"),
-      },
+      alias: [
+        { find: "$components", replacement: resolve("./src/components") },
+        { find: "$layouts", replacement: resolve("./src/layouts") },
+        { find: "$pages", replacement: resolve("./src/pages") },
+        { find: "$assets", replacement: resolve("./src/assets") },
+        { find: "$content", replacement: resolve("./src/content") },
+        { find: "shapecraft/three", replacement: resolve("../src/three/index.ts") },
+        { find: "shapecraft/noise", replacement: resolve("../src/noise/index.ts") },
+        { find: "shapecraft/color", replacement: resolve("../src/color/index.ts") },
+        { find: "shapecraft", replacement: resolve("../src/index.ts") },
+      ],
     },
     define: {
       __PUBLIC_CONFIG__: JSON.stringify(config),

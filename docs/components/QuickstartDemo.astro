@@ -4,17 +4,39 @@
 
 <script>
   async function init() {
-    const { setupScene } = await import('./scene-setup')
-    const { box, sphere, merge } = await import('../../src')
-    const { toThreeMesh } = await import('../../src/three')
+    const THREE = await import('three')
+    const { OrbitControls } = await import('three/examples/jsm/controls/OrbitControls.js')
+    const { box, sphere, merge } = await import('shapecraft')
+    const { toThreeMesh } = await import('shapecraft/three')
 
-    const ctx = await setupScene('quickstart-demo')
-    if (!ctx) return
+    const canvas = document.getElementById('quickstart-demo') as HTMLCanvasElement
+    if (!canvas) return
+
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true })
+    renderer.setSize(canvas.clientWidth, canvas.clientHeight)
+    const scene = new THREE.Scene()
+    scene.background = new THREE.Color(0x2a2a3a)
+    const camera = new THREE.PerspectiveCamera(50, canvas.clientWidth / canvas.clientHeight, 0.1, 100)
+    camera.position.set(3, 2, 4)
+    const controls = new OrbitControls(camera, canvas)
+    controls.target.set(0, 0.5, 0)
+    controls.enableDamping = true
+    controls.update()
+
+    scene.add(new THREE.HemisphereLight(0x87ceeb, 0x3a5a2a, 0.6))
+    const sun = new THREE.DirectionalLight(0xfff4e0, 1.2)
+    sun.position.set(5, 8, 5)
+    scene.add(sun)
 
     const b = box({ size: 1 }).vertexColor('#cc8844')
     const s = sphere({ radius: 0.5 }).translate(2, 0, 0).vertexColor('#4488cc')
-    const combined = merge(b, s).translate(-1, 0.5, 0)
-    ctx.scene.add(toThreeMesh(combined))
+    scene.add(toThreeMesh(merge(b, s).translate(-1, 0.5, 0)))
+
+    ;(function animate() {
+      requestAnimationFrame(animate)
+      controls.update()
+      renderer.render(scene, camera)
+    })()
   }
   init()
 </script>
