@@ -13,7 +13,12 @@ export { twist, bend, taper } from './modifiers'
 export { smooth } from './modifiers/smooth'
 
 // Color
-export { gradient, heightGradient, lerpColor, parseColorToRgb, hexToRgb, rgbToHex } from './color'
+export { gradient, heightGradient, normalGradient, lerpColor, parseColorToRgb, hexToRgb, rgbToHex } from './color'
+export { pickRandom, paletteGradient, axisGradient, noiseColor, varyColor, type Palette } from './color'
 
 // UV
 export { projectUVs } from './uv'
+
+// Utilities
+export { createRng } from './rng'
+export { scatterOnSphere } from './scatter'

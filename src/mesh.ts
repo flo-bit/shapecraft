@@ -98,23 +98,51 @@ export class Mesh {
 
   // --- Modifiers ---
 
-  displace(fn: DisplaceFn): Mesh {
+  /**
+   * Move each vertex by fn's return value along a direction.
+   * direction: 'normal' (default) — along vertex normal
+   *            'radial' — away from origin (safe for non-indexed geometry)
+   *            [x,y,z] — along a fixed axis
+   */
+  displace(fn: DisplaceFn, options?: { direction?: 'normal' | 'radial' | Vec3 }): Mesh {
     const geo = cloneGeometry(this.geometry)
     const pos = geo.getAttribute('position')
-    const norm = geo.getAttribute('normal')
     const uvAttr = geo.getAttribute('uv')
+    const dir = options?.direction ?? 'normal'
 
-    if (!norm) {
-      geo.computeVertexNormals()
-    }
-    const normals = geo.getAttribute('normal')
+    if (dir === 'normal') {
+      const norm = geo.getAttribute('normal')
+      if (!norm) geo.computeVertexNormals()
+      const normals = geo.getAttribute('normal')
 
-    for (let i = 0; i < pos.count; i++) {
-      const px = pos.getX(i), py = pos.getY(i), pz = pos.getZ(i)
-      const nx = normals.getX(i), ny = normals.getY(i), nz = normals.getZ(i)
-      const uv: Vec2 | null = uvAttr ? [uvAttr.getX(i), uvAttr.getY(i)] : null
-      const amount = fn([px, py, pz], [nx, ny, nz], uv, i)
-      pos.setXYZ(i, px + nx * amount, py + ny * amount, pz + nz * amount)
+      for (let i = 0; i < pos.count; i++) {
+        const px = pos.getX(i), py = pos.getY(i), pz = pos.getZ(i)
+        const nx = normals.getX(i), ny = normals.getY(i), nz = normals.getZ(i)
+        const uv: Vec2 | null = uvAttr ? [uvAttr.getX(i), uvAttr.getY(i)] : null
+        const amount = fn([px, py, pz], [nx, ny, nz], uv, i)
+        pos.setXYZ(i, px + nx * amount, py + ny * amount, pz + nz * amount)
+      }
+    } else if (dir === 'radial') {
+      for (let i = 0; i < pos.count; i++) {
+        const px = pos.getX(i), py = pos.getY(i), pz = pos.getZ(i)
+        const len = Math.sqrt(px * px + py * py + pz * pz) || 1
+        const nx = px / len, ny = py / len, nz = pz / len
+        const uv: Vec2 | null = uvAttr ? [uvAttr.getX(i), uvAttr.getY(i)] : null
+        const amount = fn([px, py, pz], [nx, ny, nz], uv, i)
+        pos.setXYZ(i, px + nx * amount, py + ny * amount, pz + nz * amount)
+      }
+    } else {
+      // Fixed axis
+      const ax = dir[0], ay = dir[1], az = dir[2]
+      const alen = Math.sqrt(ax * ax + ay * ay + az * az) || 1
+      const dx = ax / alen, dy = ay / alen, dz = az / alen
+
+      for (let i = 0; i < pos.count; i++) {
+        const px = pos.getX(i), py = pos.getY(i), pz = pos.getZ(i)
+        const uv: Vec2 | null = uvAttr ? [uvAttr.getX(i), uvAttr.getY(i)] : null
+        const amount = fn([px, py, pz], [dx, dy, dz], uv, i)
+        pos.setXYZ(i, px + dx * amount, py + dy * amount, pz + dz * amount)
+      }
     }
 
     pos.needsUpdate = true
@@ -122,10 +150,10 @@ export class Mesh {
     return new Mesh(geo)
   }
 
-  displaceNoise(noise: NoiseLike, amplitude: number = 1): Mesh {
+  displaceNoise(noise: NoiseLike, amplitude: number = 1, options?: { direction?: 'normal' | 'radial' | Vec3 }): Mesh {
     return this.displace((pos) => {
       return noise.get(pos[0], pos[1], pos[2]) * amplitude
-    })
+    }, options)
   }
 
   warp(fn: WarpFn): Mesh {
@@ -135,6 +163,36 @@ export class Mesh {
     for (let i = 0; i < pos.count; i++) {
       const result = fn([pos.getX(i), pos.getY(i), pos.getZ(i)], i)
       pos.setXYZ(i, result[0], result[1], result[2])
+    }
+
+    pos.needsUpdate = true
+    geo.computeVertexNormals()
+    return new Mesh(geo)
+  }
+
+  /**
+   * Push all vertices onto a sphere of the given radius (from origin).
+   * If no radius given, uses the average vertex distance from origin.
+   */
+  spherize(radius?: number): Mesh {
+    const geo = cloneGeometry(this.geometry)
+    const pos = geo.getAttribute('position')
+
+    // Auto-detect radius if not provided
+    let r = radius
+    if (r === undefined) {
+      let sum = 0
+      for (let i = 0; i < pos.count; i++) {
+        const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i)
+        sum += Math.sqrt(x * x + y * y + z * z)
+      }
+      r = sum / pos.count
+    }
+
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i)
+      const len = Math.sqrt(x * x + y * y + z * z) || 1
+      pos.setXYZ(i, x / len * r, y / len * r, z / len * r)
     }
 
     pos.needsUpdate = true

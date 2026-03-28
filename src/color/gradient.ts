@@ -27,3 +27,20 @@ export function heightGradient(stops: GradientStop[]): ColorFn {
     return grad(position[1])
   }
 }
+
+/**
+ * Color based on normal direction — lerps between downColor (facing down)
+ * and upColor (facing up). Useful for vegetation, terrain, etc.
+ */
+export function normalGradient(upColor: ColorInput, downColor: ColorInput): ColorFn {
+  const up = parseColorToRgb(upColor)
+  const down = parseColorToRgb(downColor)
+  return function normalColorFn(_position: Vec3, normal: Vec3): [number, number, number] {
+    const t = normal[1] * 0.5 + 0.5 // -1..1 → 0..1
+    return [
+      down[0] + (up[0] - down[0]) * t,
+      down[1] + (up[1] - down[1]) * t,
+      down[2] + (up[2] - down[2]) * t,
+    ]
+  }
+}
