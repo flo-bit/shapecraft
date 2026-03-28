@@ -22,3 +22,7 @@ export { projectUVs } from './uv'
 // Utilities
 export { createRng } from './rng'
 export { scatterOnSphere } from './scatter'
+
+// Schema & options
+export { resolveOptions } from './schema'
+export type { OptionSchema, OptionDef, OptionValues, Randomizable } from './schema'

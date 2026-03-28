@@ -5,10 +5,14 @@ export function toThreeMesh(mesh: Mesh, options?: {
   material?: THREE.Material
   flatShading?: boolean
   wireframe?: boolean
+  roughness?: number
+  metalness?: number
 }): THREE.Mesh {
   const geometry = toThreeGeometry(mesh)
   const flatShading = options?.flatShading ?? true
   const wireframe = options?.wireframe ?? false
+  const roughness = options?.roughness ?? 1
+  const metalness = options?.metalness ?? 0
 
   let material: THREE.Material
   if (options?.material) {
@@ -18,12 +22,16 @@ export function toThreeMesh(mesh: Mesh, options?: {
       vertexColors: true,
       flatShading,
       wireframe,
+      roughness,
+      metalness,
     })
   } else {
     material = new THREE.MeshStandardMaterial({
       color: 0xcccccc,
       flatShading,
       wireframe,
+      roughness,
+      metalness,
     })
   }
 
