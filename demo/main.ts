@@ -58,12 +58,12 @@ scene.add(hemi)
 const sun = new THREE.DirectionalLight(0xfff4e0, 1.4)
 sun.position.set(8, 12, 5)
 sun.castShadow = true
-sun.shadow.mapSize.set(2048, 2048)
+sun.shadow.mapSize.set(4096, 4096)
 sun.shadow.camera.left = -15
 sun.shadow.camera.right = 15
 sun.shadow.camera.top = 15
 sun.shadow.camera.bottom = -15
-sun.shadow.camera.near = 0.5
+sun.shadow.camera.near = 0.01
 sun.shadow.camera.far = 40
 sun.shadow.bias = -0.001
 scene.add(sun)
