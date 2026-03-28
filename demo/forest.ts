@@ -4,9 +4,9 @@ import { toThreeMesh } from '../src/three'
 import { plane, createRng } from '../src'
 import { fbm } from '../src/noise'
 import { heightGradient } from '../src/color'
-import { tree } from './generators/common-tree'
-import { pine } from './generators/pine-tree'
-import { palm } from './generators/palm-tree'
+import { tree } from '../src/generators/common-tree'
+import { pine } from '../src/generators/pine-tree'
+import { palm } from '../src/generators/palm-tree'
 
 // --- Renderer ---
 const renderer = new THREE.WebGLRenderer({ antialias: true })

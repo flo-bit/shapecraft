@@ -1,4 +1,4 @@
-import type { ColorInput, ColorFn, Vec3 } from '../types'
+import type { ColorInput, ColorFn, Vec3 } from '../core/types'
 import { parseColorToRgb, lerpColor } from './utils'
 
 export type GradientStop = [number, ColorInput]

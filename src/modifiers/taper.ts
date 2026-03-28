@@ -1,4 +1,4 @@
-import type { WarpFn, Vec3 } from '../types'
+import type { WarpFn, Vec3 } from '../core/types'
 
 export function taper(options: { axis?: 'x' | 'y' | 'z'; curve?: (t: number) => number }): WarpFn {
   const { axis = 'y', curve = (t: number) => 1 - t } = options

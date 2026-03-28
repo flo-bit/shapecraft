@@ -1,6 +1,6 @@
 // Core
-export { Mesh } from './mesh'
-export type { Vec2, Vec3, Vec4, ColorInput, ColorFn, DisplaceFn, WarpFn, NoiseLike } from './types'
+export { Mesh } from './core/mesh'
+export type { Vec2, Vec3, Vec4, ColorInput, ColorFn, DisplaceFn, WarpFn, NoiseLike } from './core/types'
 
 // Primitives
 export { box, sphere, cylinder, plane, cone, torus, icosphere } from './primitives'
@@ -20,9 +20,14 @@ export { pickRandom, paletteGradient, axisGradient, noiseColor, varyColor, type 
 export { projectUVs } from './uv'
 
 // Utilities
-export { createRng } from './rng'
-export { scatterOnSphere } from './scatter'
+export { createRng } from './core/rng'
+export { scatterOnSphere } from './core/scatter'
 
 // Schema & options
-export { resolveOptions } from './schema'
-export type { OptionSchema, OptionDef, OptionValues, Randomizable } from './schema'
+export { resolveOptions } from './core/schema'
+export type { OptionSchema, OptionDef, OptionValues, Randomizable } from './core/schema'
+
+// Generators
+export { tree, treeSchema, treePresets } from './generators'
+export { pine, pineSchema, pinePresets } from './generators'
+export { palm, palmSchema, palmPresets } from './generators'

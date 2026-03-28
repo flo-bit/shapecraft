@@ -1,4 +1,4 @@
-import { Mesh } from '../mesh'
+import { Mesh } from '../core/mesh'
 
 // STUB for v0 — lattice deformation placeholder
 export interface LatticeOptions {

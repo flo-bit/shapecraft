@@ -1,4 +1,4 @@
-import { Mesh } from '../mesh'
+import { Mesh } from '../core/mesh'
 
 export interface WorkerPoolOptions {
   maxWorkers?: number

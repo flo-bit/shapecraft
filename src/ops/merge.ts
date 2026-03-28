@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
-import { Mesh } from '../mesh'
+import { Mesh } from '../core/mesh'
 
 export function merge(...meshes: Mesh[]): Mesh {
   if (meshes.length === 0) {

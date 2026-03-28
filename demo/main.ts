@@ -4,9 +4,9 @@ import { toThreeMesh } from '../src/three'
 import { plane } from '../src'
 import { fbm } from '../src/noise'
 import { heightGradient } from '../src/color'
-import { tree, treeSchema, treePresets } from './generators/common-tree'
-import { pine, pineSchema, pinePresets } from './generators/pine-tree'
-import { palm, palmSchema, palmPresets } from './generators/palm-tree'
+import { tree, treeSchema, treePresets } from '../src/generators/common-tree'
+import { pine, pineSchema, pinePresets } from '../src/generators/pine-tree'
+import { palm, palmSchema, palmPresets } from '../src/generators/palm-tree'
 import { createEditor } from './editor/editor'
 
 // --- Renderer ---

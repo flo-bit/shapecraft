@@ -1,6 +1,6 @@
 import * as THREE from 'three'
-import { Mesh } from '../mesh'
-import type { Vec2 } from '../types'
+import { Mesh } from '../core/mesh'
+import type { Vec2 } from '../core/types'
 
 export interface PlaneOptions {
   width?: number

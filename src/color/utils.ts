@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import type { ColorInput } from '../types'
+import type { ColorInput } from '../core/types'
 
 export function parseColorToRgb(input: ColorInput): [number, number, number] {
   if (typeof input === 'number') {

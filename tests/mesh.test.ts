@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import * as THREE from 'three'
-import { Mesh } from '../src/mesh'
+import { Mesh } from '../src/core/mesh'
 
 function makeTriangleGeometry(): THREE.BufferGeometry {
   const geo = new THREE.BufferGeometry()

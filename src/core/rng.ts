@@ -1,4 +1,4 @@
-import { aleaFactory } from './noise/alea/alea'
+import { aleaFactory } from '../noise/alea/alea'
 
 /**
  * Create a seeded random number generator.

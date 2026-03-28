@@ -1,6 +1,6 @@
 import { interpolate, oklch, formatRgb, parse, converter } from 'culori'
-import type { ColorInput, ColorFn, Vec3 } from '../types'
-import type { NoiseLike } from '../types'
+import type { ColorInput, ColorFn, Vec3 } from '../core/types'
+import type { NoiseLike } from '../core/types'
 
 const toOklch = converter('oklch')
 

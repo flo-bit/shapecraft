@@ -1,4 +1,4 @@
-import type { WarpFn, Vec3 } from '../types'
+import type { WarpFn, Vec3 } from '../core/types'
 
 export function twist(options: { axis?: 'x' | 'y' | 'z'; amount: number }): WarpFn {
   const { axis = 'y', amount } = options

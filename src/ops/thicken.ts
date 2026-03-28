@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { Mesh } from '../mesh'
+import { Mesh } from '../core/mesh'
 
 /**
  * Give a mesh thickness by duplicating it, offsetting along normals,

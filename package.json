@@ -10,7 +10,8 @@
     "./modifiers": "./src/modifiers/index.ts",
     "./ops": "./src/ops/index.ts",
     "./color": "./src/color/index.ts",
-    "./uv": "./src/uv/index.ts"
+    "./uv": "./src/uv/index.ts",
+    "./generators": "./src/generators/index.ts"
   },
   "scripts": {
     "dev": "vite demo",

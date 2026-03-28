@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { Mesh } from '../mesh'
+import { Mesh } from '../core/mesh'
 
 export function smooth(mesh: Mesh, iterations: number = 1): Mesh {
   let geo = mesh.geometry.clone()
