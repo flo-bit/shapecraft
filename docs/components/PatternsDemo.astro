@@ -3,23 +3,26 @@
 <canvas id="patterns-demo" style="width:100%;height:500px;border-radius:8px;background:#1a1a2e;display:block;"></canvas>
 
 <script>
-  import { setupScene } from './scene-setup'
-  import { plane, icosphere, merge, tube, createRng } from '../../src'
-  import { fbm } from '../../src/noise'
-  import { heightGradient, normalGradient } from '../../src/color'
-  import { toThreeMesh } from '../../src/three'
+  async function init() {
+    const { setupScene } = await import('./scene-setup')
+    const { plane, icosphere, merge, tube, createRng } = await import('../../src')
+    const { fbm } = await import('../../src/noise')
+    const { heightGradient, normalGradient } = await import('../../src/color')
+    const { toThreeMesh } = await import('../../src/three')
 
-  const ctx = setupScene('patterns-demo', { cameraPos: [6, 5, 8], target: [0, 0.5, 0] })
-  if (ctx) {
+    const ctx = await setupScene('patterns-demo', { cameraPos: [6, 5, 8], target: [0, 0.5, 0] })
+    if (!ctx) return
+
     const terrainNoise = fbm({ seed: 7, scale: 0.2, octaves: 3 })
-    const terrain = plane({ size: 12, segments: 40 })
-      .displaceNoise(terrainNoise, 0.5)
-      .vertexColor(heightGradient([
-        [-0.1, [0.22, 0.38, 0.12]],
-        [0.2, [0.3, 0.45, 0.15]],
-        [0.4, [0.35, 0.4, 0.18]],
-      ]))
-    ctx.scene.add(toThreeMesh(terrain))
+    ctx.scene.add(toThreeMesh(
+      plane({ size: 12, segments: 40 })
+        .displaceNoise(terrainNoise, 0.5)
+        .vertexColor(heightGradient([
+          [-0.1, [0.22, 0.38, 0.12]],
+          [0.2, [0.3, 0.45, 0.15]],
+          [0.4, [0.35, 0.4, 0.18]],
+        ]))
+    ))
 
     const rand = createRng(42)
     for (let i = 0; i < 10; i++) {
@@ -43,4 +46,5 @@
       ctx.scene.add(obj)
     }
   }
+  init()
 </script>

@@ -3,24 +3,28 @@
 <canvas id="loft-demo" style="width:100%;height:400px;border-radius:8px;background:#1a1a2e;display:block;"></canvas>
 
 <script>
-  import { setupScene } from './scene-setup'
-  import { loft, tube, thicken } from '../../src'
-  import { toThreeMesh } from '../../src/three'
-  import type { Vec3 } from '../../src'
+  async function init() {
+    const { setupScene } = await import('./scene-setup')
+    const { tube, loft, thicken } = await import('../../src')
+    const { toThreeMesh } = await import('../../src/three')
 
-  const ctx = setupScene('loft-demo', { cameraPos: [3, 3, 5], target: [0, 1, 0] })
-  if (ctx) {
-    const branchPath: Vec3[] = Array.from({ length: 10 }, (_, i) => {
+    const ctx = await setupScene('loft-demo', { cameraPos: [3, 3, 5], target: [0, 1, 0] })
+    if (!ctx) return
+
+    // Tapered branch
+    const branchPath = Array.from({ length: 10 }, (_, i) => {
       const t = i / 9
-      return [Math.sin(t * 2) * 0.5, t * 2, Math.cos(t * 3) * 0.3]
+      return [Math.sin(t * 2) * 0.5, t * 2, Math.cos(t * 3) * 0.3] as [number, number, number]
     })
-    const branch = tube(branchPath, (t) => 0.08 * (1 - t * 0.8), 5)
-      .translate(-1.5, 0, 0).vertexColor('#8B6B4A')
-    ctx.scene.add(toThreeMesh(branch))
+    ctx.scene.add(toThreeMesh(
+      tube(branchPath, (t) => 0.08 * (1 - t * 0.8), 5)
+        .translate(-1.5, 0, 0).vertexColor('#8B6B4A')
+    ))
 
-    const leafPath: Vec3[] = Array.from({ length: 8 }, (_, i) => {
+    // Lofted leaf
+    const leafPath = Array.from({ length: 8 }, (_, i) => {
       const t = i / 7
-      return [0, t * 1.5 + 0.3, -t * 0.3]
+      return [0, t * 1.5 + 0.3, -t * 0.3] as [number, number, number]
     })
     const leaf = loft({
       path: leafPath,
@@ -34,15 +38,18 @@
     }).vertexColor('#3a7a2a')
     ctx.scene.add(toThreeMesh(thicken(leaf, 0.01)))
 
-    const trunkPath: Vec3[] = Array.from({ length: 15 }, (_, i) => {
+    // Wavy trunk
+    const trunkPath = Array.from({ length: 15 }, (_, i) => {
       const t = i / 14
-      return [1.5 + Math.sin(t * 4) * 0.15, t * 2, 0]
+      return [1.5 + Math.sin(t * 4) * 0.15, t * 2, 0] as [number, number, number]
     })
-    const trunk = tube(trunkPath, (t) => {
-      const taper = 0.1 * (1 - t * 0.5)
-      const wave = 1 + Math.sin(t * Math.PI * 10) * 0.12
-      return taper * wave
-    }, 5).vertexColor('#6a5030')
-    ctx.scene.add(toThreeMesh(trunk))
+    ctx.scene.add(toThreeMesh(
+      tube(trunkPath, (t) => {
+        const taper = 0.1 * (1 - t * 0.5)
+        const wave = 1 + Math.sin(t * Math.PI * 10) * 0.12
+        return taper * wave
+      }, 5).vertexColor('#6a5030')
+    ))
   }
+  init()
 </script>

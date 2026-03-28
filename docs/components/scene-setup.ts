@@ -1,13 +1,13 @@
-import * as THREE from 'three'
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
-
-export function setupScene(canvasId: string, options?: {
+export async function setupScene(canvasId: string, options?: {
   cameraPos?: [number, number, number]
   target?: [number, number, number]
   background?: number
 }) {
   const canvas = document.getElementById(canvasId) as HTMLCanvasElement
   if (!canvas) return null
+
+  const THREE = await import('three')
+  const { OrbitControls } = await import('three/examples/jsm/controls/OrbitControls.js')
 
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true })
   renderer.setSize(canvas.clientWidth, canvas.clientHeight)
@@ -33,13 +33,6 @@ export function setupScene(canvasId: string, options?: {
   sun.position.set(5, 8, 5)
   scene.add(sun)
 
-  // Ground
-  const ground = new THREE.Mesh(
-    new THREE.PlaneGeometry(20, 20),
-    new THREE.MeshStandardMaterial({ color: 0x3a5a3a })
-  )
-  ground.rotation.x = -Math.PI / 2
-  scene.add(ground)
 
   function animate() {
     requestAnimationFrame(animate)

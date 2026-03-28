@@ -1,5 +1,5 @@
 {
-    "SITE": "http://localhost:4321",
-    "BASE": "docs",
-    "SITE_NAME": "My Project"
+    "SITE": "https://flo-bit.dev",
+    "BASE": "/shapecraft",
+    "SITE_NAME": "shapecraft"
 }
