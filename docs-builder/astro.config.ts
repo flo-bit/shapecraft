@@ -38,6 +38,8 @@ export default defineConfig({
         { find: "$pages", replacement: resolve("./src/pages") },
         { find: "$assets", replacement: resolve("./src/assets") },
         { find: "$content", replacement: resolve("./src/content") },
+        { find: /^three\//, replacement: resolve("./node_modules/three/") },
+        { find: /^three$/, replacement: resolve("./node_modules/three/build/three.module.js") },
         { find: "shapecraft/three", replacement: resolve("../src/three/index.ts") },
         { find: "shapecraft/noise", replacement: resolve("../src/noise/index.ts") },
         { find: "shapecraft/color", replacement: resolve("../src/color/index.ts") },
