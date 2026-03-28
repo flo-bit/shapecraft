@@ -40,6 +40,7 @@ export default defineConfig({
         { find: "$content", replacement: resolve("./src/content") },
         { find: "three/examples", replacement: resolve("./node_modules/three/examples") },
         { find: "three", replacement: resolve("./node_modules/three/build/three.module.js") },
+        { find: "culori", replacement: resolve("./node_modules/culori/src/index.js") },
         { find: "shapecraft/three", replacement: resolve("../src/three/index.ts") },
         { find: "shapecraft/noise", replacement: resolve("../src/noise/index.ts") },
         { find: "shapecraft/color", replacement: resolve("../src/color/index.ts") },
