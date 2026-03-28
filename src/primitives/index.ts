@@ -1,0 +1,6 @@
+export { box, type BoxOptions } from './box'
+export { sphere, type SphereOptions } from './sphere'
+export { cylinder, type CylinderOptions } from './cylinder'
+export { plane, type PlaneOptions } from './plane'
+export { cone, type ConeOptions } from './cone'
+export { torus, type TorusOptions } from './torus'

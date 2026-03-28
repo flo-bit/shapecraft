@@ -1,0 +1,52 @@
+# Quickstart
+
+## Install
+
+```bash
+npm install shapecraft three
+```
+
+Three.js is a peer dependency — you provide it.
+
+## Basic usage
+
+```ts
+import { box, sphere, merge } from 'shapecraft'
+import { toThreeMesh } from 'shapecraft/three'
+
+// Create primitives
+const b = box({ size: 1 })
+const s = sphere({ radius: 0.5 }).translate(2, 0, 0)
+
+// Combine
+const combined = merge(b, s)
+
+// Add to Three.js scene
+const threeMesh = toThreeMesh(combined)
+scene.add(threeMesh)
+```
+
+## Core idea
+
+Everything is a `Mesh`. Primitives return meshes. Transforms and modifiers return **new** meshes (immutable). You compose by chaining method calls and merging results.
+
+```ts
+const leg = cylinder({ radius: 0.05, height: 1 })
+  .translate(0, 0.5, 0)
+  .vertexColor('#8B4513')
+
+const seat = box({ width: 1, height: 0.1, depth: 1 })
+  .translate(0, 1, 0)
+  .vertexColor('#A0522D')
+
+const chair = merge(seat, leg.translate(-0.4, 0, -0.4), leg.translate(0.4, 0, -0.4),
+                          leg.translate(-0.4, 0, 0.4),  leg.translate(0.4, 0, 0.4))
+```
+
+## Running the demo
+
+```bash
+npm run dev
+```
+
+Opens a Vite dev server with a demo scene at `http://localhost:5173`.
