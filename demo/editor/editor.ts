@@ -29,7 +29,13 @@ export function createEditor(
 
   const values: Record<string, any> = {}
   for (const [key, def] of Object.entries(schema)) {
-    values[key] = structuredClone(def.default)
+    const d = def.default
+    // For range/integer with [min,max] default, show midpoint in editor
+    if (Array.isArray(d) && d.length === 2 && typeof d[0] === 'number' && (def.type === 'range' || def.type === 'integer')) {
+      values[key] = (d[0] + d[1]) / 2
+    } else {
+      values[key] = structuredClone(d)
+    }
   }
 
   const controls: Map<string, { set: (v: any) => void }> = new Map()
@@ -69,9 +75,14 @@ export function createEditor(
     container.appendChild(row)
 
     function applyPreset(name: string) {
-      // Reset to schema defaults first
+      // Reset to schema defaults first (resolve [min,max] to midpoint for editor)
       for (const [key, def] of Object.entries(schema)) {
-        values[key] = structuredClone(def.default)
+        const d = def.default
+        if (Array.isArray(d) && d.length === 2 && typeof d[0] === 'number' && (def.type === 'range' || def.type === 'integer')) {
+          values[key] = def.type === 'integer' ? Math.round((d[0] + d[1]) / 2) : (d[0] + d[1]) / 2
+        } else {
+          values[key] = structuredClone(d)
+        }
       }
       // Apply preset overrides
       const preset = editorOptions!.presets![name]
@@ -128,11 +139,11 @@ function createControl(
     input.min = String(def.min)
     input.max = String(def.max)
     input.step = String(step)
-    input.value = String(def.default)
+    input.value = String(values[key])
     input.style.cssText = 'flex: 1; accent-color: #6a6; height: 4px;'
 
     const num = document.createElement('span')
-    num.textContent = formatNum(def.default)
+    num.textContent = formatNum(values[key])
     num.style.cssText = 'width: 40px; text-align: right; font-size: 11px; color: #888; font-variant-numeric: tabular-nums;'
 
     input.addEventListener('input', () => {
@@ -142,8 +153,9 @@ function createControl(
     })
 
     setter = (v) => {
-      input.value = String(v)
-      num.textContent = formatNum(v)
+      const n = Array.isArray(v) ? (v[0] + v[1]) / 2 : v
+      input.value = String(n)
+      num.textContent = formatNum(n)
     }
 
     wrap.appendChild(input)
@@ -158,11 +170,11 @@ function createControl(
     input.min = String(def.min)
     input.max = String(def.max)
     input.step = '1'
-    input.value = String(def.default)
+    input.value = String(values[key])
     input.style.cssText = 'flex: 1; accent-color: #6a6; height: 4px;'
 
     const num = document.createElement('span')
-    num.textContent = String(def.default)
+    num.textContent = String(values[key])
     num.style.cssText = 'width: 30px; text-align: right; font-size: 11px; color: #888;'
 
     input.addEventListener('input', () => {
@@ -172,8 +184,9 @@ function createControl(
     })
 
     setter = (v) => {
-      input.value = String(v)
-      num.textContent = String(v)
+      const n = Array.isArray(v) ? Math.round((v[0] + v[1]) / 2) : v
+      input.value = String(n)
+      num.textContent = String(n)
     }
 
     wrap.appendChild(input)

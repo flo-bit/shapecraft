@@ -1,0 +1,137 @@
+import PatternsDemo from './components/PatternsDemo.astro'
+
+# Patterns
+
+<PatternsDemo />
+
+## Generator functions
+
+A generator is just a function that returns a Mesh:
+
+```ts
+function tree(options?: { height?: number; seed?: number }): Mesh {
+  const rand = createRng(options?.seed ?? 1)
+  const trunk = cylinder({ radius: 0.05, height: height * 0.4 })
+    .translate(0, height * 0.2, 0)
+    .vertexColor([0.35, 0.22, 0.1])
+  const canopy = icosphere({ radius: 0.5 })
+    .translate(0, height * 0.6, 0)
+    .faceColor(...)
+  return merge(trunk, canopy)
+}
+```
+
+## Seeded randomness
+
+Use `createRng` (wraps alea PRNG) for deterministic generation:
+
+```ts
+import { createRng } from 'shapecraft'
+
+const rand = createRng(42)       // seed → deterministic sequence
+rand()                           // 0-1
+rand()                           // next value
+
+// Derive sub-seeds for noise, jitter, etc.
+function subSeed() { return Math.floor(rand() * 2147483647) }
+const noise = new UberNoise({ seed: subSeed() })
+mesh.jitter(0.05, { seed: subSeed() })
+```
+
+**Important:** always consume `rand()` / `subSeed()` calls in the same order regardless of options, so changing one parameter doesn't shift the entire random sequence.
+
+## Option schemas & presets
+
+Define configurable generators with typed schemas:
+
+```ts
+import { resolveOptions, type OptionSchema } from 'shapecraft'
+
+const treeSchema = {
+  height:     { type: 'range',   default: 2.5, min: 0.5, max: 6, step: 0.1 },
+  seed:       { type: 'integer', default: 1,   min: 1,   max: 100 },
+  lean:       { type: 'range',   default: [0.1, 0.4], min: 0, max: 1 },  // randomized range
+  showCanopy: { type: 'boolean', default: true },
+  colors:     { type: 'color-array', default: ['#1a5a10', '#2a7518'] },
+} satisfies OptionSchema
+
+const presets = {
+  default: {},
+  autumn: { colors: ['#c44422', '#d48825'] },
+  winter: { colors: ['#4a4a4a'], snowColors: ['#e8e8f0'] },
+}
+
+function tree(options = {}) {
+  const rand = createRng(options.seed ?? 1)
+  const o = resolveOptions(treeSchema, options, presets, rand)
+  // o.height is a number, o.lean is resolved from [min,max] via rand
+}
+```
+
+Numeric defaults can be `[min, max]` — resolved deterministically from the seed. The editor shows the midpoint.
+
+## Scatter points
+
+```ts
+import { scatterOnSphere } from 'shapecraft'
+
+// N random points on a sphere surface
+const points = scatterOnSphere(5, seed, {
+  radius: 1,
+  polarMin: Math.PI * 0.3,  // avoid top
+  polarMax: Math.PI * 0.7,  // avoid bottom
+})
+// → [[x,y,z], [x,y,z], ...]
+```
+
+## Terrain workflow
+
+```ts
+const terrain = plane({ size: 20, segments: 100 })
+  .displaceNoise(fbm({ seed: 42, scale: 0.2, octaves: 5 }), 3)
+  .vertexColor(heightGradient([
+    [0, [0.2, 0.5, 0.1]],
+    [1.5, [0.5, 0.35, 0.2]],
+    [3, [1, 1, 1]],
+  ]))
+```
+
+## Organic shapes with icosphere
+
+```ts
+// Subdivide → spherize → displace radially (no gaps)
+icosphere({ radius: r, subdivisions: 0 })
+  .subdivideAdaptive(edgeLen)
+  .spherize(r)
+  .displaceNoise(noise, r * 0.5, { direction: 'radial' })
+  .jitter(r * 0.04, { seed })
+```
+
+Use `direction: 'radial'` instead of `'normal'` on non-indexed geometry to avoid gaps between faces.
+
+## Branches & tubes
+
+```ts
+import { tube } from 'shapecraft'
+
+// Tapered branch along a curved path
+const path = [[0,0,0], [0.1,0.5,0], [0.3,1,0.1], [0.2,1.5,0]]
+const branch = tube(path, (t) => 0.05 * (1 - t * 0.8), 5)
+```
+
+## Leaves with loft + thicken
+
+```ts
+import { loft, thicken } from 'shapecraft'
+
+const leaf = loft({
+  path: leafPath,
+  shape: (t) => {
+    const w = 0.2 * Math.sin(t * Math.PI)  // wide in middle
+    return [[-w, 0], [0, w*0.2], [w, 0]]
+  },
+  closedShape: false,
+  up: [0, 1, 0],
+})
+const solidLeaf = thicken(leaf, 0.01)
+```

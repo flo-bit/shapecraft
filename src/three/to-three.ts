@@ -7,10 +7,12 @@ export function toThreeMesh(mesh: Mesh, options?: {
   wireframe?: boolean
   roughness?: number
   metalness?: number
+  doubleSided?: boolean
 }): THREE.Mesh {
   const geometry = toThreeGeometry(mesh)
   const flatShading = options?.flatShading ?? true
   const wireframe = options?.wireframe ?? false
+  const side = options?.doubleSided ? THREE.DoubleSide : THREE.FrontSide
   const roughness = options?.roughness ?? 1
   const metalness = options?.metalness ?? 0
 
@@ -24,6 +26,7 @@ export function toThreeMesh(mesh: Mesh, options?: {
       wireframe,
       roughness,
       metalness,
+      side,
     })
   } else {
     material = new THREE.MeshStandardMaterial({
@@ -32,6 +35,7 @@ export function toThreeMesh(mesh: Mesh, options?: {
       wireframe,
       roughness,
       metalness,
+      side,
     })
   }
 

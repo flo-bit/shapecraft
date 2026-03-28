@@ -4,7 +4,9 @@ import { toThreeMesh } from '../src/three'
 import { plane } from '../src'
 import { fbm } from '../src/noise'
 import { heightGradient } from '../src/color'
-import { tree, treeSchema, treePresets } from './generators/tree'
+import { tree, treeSchema, treePresets } from './generators/common-tree'
+import { pine, pineSchema, pinePresets } from './generators/pine-tree'
+import { palm, palmSchema, palmPresets } from './generators/palm-tree'
 import { createEditor } from './editor/editor'
 
 // --- Renderer ---
@@ -84,38 +86,39 @@ scene.add(groundObj)
 
 // --- Tree management ---
 let treeObjects: THREE.Mesh[] = []
+let activeGenerator: 'common' | 'pine' | 'palm' = 'common'
 
-function rebuildTrees(opts: Record<string, any>) {
-  // Remove old trees
+function clearTrees() {
   for (const obj of treeObjects) {
     scene.remove(obj)
     obj.geometry.dispose()
-    if (Array.isArray(obj.material)) {
-      obj.material.forEach(m => m.dispose())
-    } else {
-      obj.material.dispose()
-    }
+    if (Array.isArray(obj.material)) obj.material.forEach(m => m.dispose())
+    else obj.material.dispose()
   }
   treeObjects = []
+}
 
-  // Scatter trees using a fixed layout RNG
+function rebuildTrees(opts: Record<string, any>) {
+  clearTrees()
+
   let rngSeed = 42
   function rng() { rngSeed = (rngSeed * 16807) % 2147483647; return (rngSeed & 0x7fffffff) / 2147483647 }
+
+  const gen = activeGenerator === 'pine' ? pine : activeGenerator === 'palm' ? palm : tree
+  const defaultHeight = activeGenerator === 'pine' ? 3 : activeGenerator === 'palm' ? 3.5 : 2.5
 
   for (let i = 0; i < 15; i++) {
     const x = (rng() - 0.5) * 20
     const z = (rng() - 0.5) * 20
-    const dist = Math.sqrt(x * x + z * z)
-    if (dist < 1.5) continue
+    if (Math.sqrt(x * x + z * z) < 1.5) continue
 
-    const t = tree({
+    const t = gen({
       ...opts,
       seed: (opts.seed ?? 1) + i,
-      height: (opts.height ?? 2.5) * (0.8 + rng() * 0.4),
+      height: (opts.height ?? defaultHeight) * (0.8 + rng() * 0.4),
     })
     const obj = toThreeMesh(t)
-    const groundY = groundNoise.get(x, z)
-    obj.position.set(x, groundY, z)
+    obj.position.set(x, groundNoise.get(x, z), z)
     obj.castShadow = true
     obj.receiveShadow = true
     scene.add(obj)
@@ -123,13 +126,37 @@ function rebuildTrees(opts: Record<string, any>) {
   }
 }
 
-// --- Editor ---
-const editorEl = createEditor(treeSchema, {
-  onChange: rebuildTrees,
-}, {
-  presets: treePresets,
-})
-document.body.appendChild(editorEl)
+// --- Editor with generator switcher ---
+let currentEditorEl: HTMLElement | null = null
+let lastOpts: Record<string, any> = {}
+
+function mountEditor(type: 'common' | 'pine') {
+  activeGenerator = type
+  if (currentEditorEl) currentEditorEl.remove()
+
+  const schema = type === 'pine' ? pineSchema : type === 'palm' ? palmSchema : treeSchema
+  const presets = type === 'pine' ? pinePresets : type === 'palm' ? palmPresets : treePresets
+
+  currentEditorEl = createEditor(schema, {
+    onChange: (opts) => { lastOpts = opts; rebuildTrees(opts) },
+  }, { presets })
+
+  // Add generator switcher at the top
+  const switcher = document.createElement('div')
+  switcher.style.cssText = 'margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid #333; display: flex; gap: 4px;'
+  for (const t of ['common', 'pine', 'palm'] as const) {
+    const btn = document.createElement('button')
+    btn.textContent = t === 'common' ? 'Common' : t === 'pine' ? 'Pine' : 'Palm'
+    btn.style.cssText = `flex: 1; padding: 6px; border: 1px solid #444; background: ${t === type ? '#3a5a3a' : '#222'}; color: #ddd; cursor: pointer; font-size: 12px;`
+    btn.addEventListener('click', () => { if (t !== activeGenerator) mountEditor(t) })
+    switcher.appendChild(btn)
+  }
+  currentEditorEl.prepend(switcher)
+
+  document.body.appendChild(currentEditorEl)
+}
+
+mountEditor('common')
 
 // Expose for screenshot scripts
 ;(window as any).__camera = camera

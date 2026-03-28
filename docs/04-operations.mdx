@@ -1,0 +1,103 @@
+import LoftDemo from './components/LoftDemo.astro'
+
+# Operations
+
+Standalone functions for combining and manipulating meshes.
+
+## merge
+
+Combine multiple meshes into one. Automatically normalizes attributes (colors, UVs, normals) and handles mixed indexed/non-indexed geometry.
+
+```ts
+import { merge, box, sphere } from 'shapecraft'
+
+const combined = merge(
+  box().translate(-1, 0, 0),
+  sphere().translate(1, 0, 0),
+)
+```
+
+## center
+
+Recenter a mesh's bounding box to the origin.
+
+```ts
+import { center } from 'shapecraft'
+const centered = center(mesh)
+```
+
+## clone
+
+Deep copy a mesh.
+
+```ts
+import { clone } from 'shapecraft'
+const copy = clone(mesh)
+```
+
+## loft, tube & thicken
+
+<LoftDemo />
+
+### loft
+
+Sweep a 2D cross-section along a 3D path. The cross-section is oriented using rotation-minimizing frames (or a fixed `up` vector).
+
+```ts
+import { loft } from 'shapecraft'
+
+// Fixed cross-section
+loft({
+  path: [[0,0,0], [0,1,0], [0.5,2,0]],
+  shape: [[-0.1,0], [0.1,0], [0,0.1]],
+})
+
+// Varying cross-section (tapered leaf shape)
+loft({
+  path: frondPath,
+  shape: (t) => {
+    const w = 0.3 * (1 - t)
+    return [[-w, 0], [0, w*0.3], [w, 0]]
+  },
+  closedShape: false,  // open cross-section (no bottom)
+  closed: false,       // no end caps
+  up: [0, 1, 0],       // keep cross-section aligned to world up
+})
+```
+
+Options:
+- `shape` — `[x,y][]` or `(t: number) => [x,y][]` for varying along path
+- `closed` — cap the ends (default `true`)
+- `closedShape` — connect last shape point to first (default `true`)
+- `up` — reference up vector for consistent orientation (default: auto)
+
+### tube
+
+Shorthand for circular loft — sweep a radius along a path. Great for branches, vines, trunks.
+
+```ts
+import { tube } from 'shapecraft'
+
+// Fixed radius
+tube([[0,0,0], [0,1,0], [0.3,2,0]], 0.05, 6)
+
+// Tapered — radius function of t (0-1 along path)
+tube(path, (t) => 0.1 * (1 - t), 6)
+
+// Palm trunk with bulge waves
+tube(path, (t) => {
+  const taper = 0.1 * (1 - t * 0.6)
+  const wave = 1 + Math.sin(t * Math.PI * 14) * 0.15
+  return taper * wave
+}, 5)
+```
+
+### thicken
+
+Give a flat mesh depth by duplicating it, offsetting along normals, and stitching boundary edges. Works best with indexed geometry (e.g. from `loft`).
+
+```ts
+import { thicken } from 'shapecraft'
+
+const leaf = thicken(flatLeafMesh, 0.02)
+```

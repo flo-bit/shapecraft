@@ -1,6 +1,6 @@
 export interface RangeOption {
   type: 'range'
-  default: number
+  default: number | [number, number]
   min: number
   max: number
   step?: number
@@ -9,7 +9,7 @@ export interface RangeOption {
 
 export interface IntegerOption {
   type: 'integer'
-  default: number
+  default: number | [number, number]
   min: number
   max: number
   label?: string

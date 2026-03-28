@@ -1,0 +1,46 @@
+# Three.js Bridge
+
+Convert between shapecraft meshes and Three.js objects.
+
+```ts
+import { toThreeMesh, toThreeGeometry, fromThreeGeometry } from 'shapecraft/three'
+```
+
+## toThreeMesh
+
+Returns a `THREE.Mesh` ready to add to a scene.
+
+```ts
+const threeMesh = toThreeMesh(mesh)
+scene.add(threeMesh)
+
+// Options
+toThreeMesh(mesh, {
+  flatShading: true,     // default true (low-poly look)
+  wireframe: false,      // default false
+  roughness: 1,          // default 1 (fully matte)
+  metalness: 0,          // default 0
+  doubleSided: false,    // default false — set true for thin geometry (leaves)
+  material: myMaterial,  // override auto-generated material entirely
+})
+```
+
+Auto-detects vertex colors — uses `MeshStandardMaterial({ vertexColors: true })` if present, otherwise default gray.
+
+## toThreeGeometry
+
+Get just the `THREE.BufferGeometry`:
+
+```ts
+const geometry = toThreeGeometry(mesh)
+const obj = new THREE.Mesh(geometry, myMaterial)
+```
+
+## fromThreeGeometry
+
+Import an existing Three.js geometry into shapecraft:
+
+```ts
+const mesh = fromThreeGeometry(existingGeometry)
+mesh.translate(1, 0, 0).vertexColor('#ff0000')
+```

@@ -1,0 +1,46 @@
+---
+---
+<canvas id="patterns-demo" style="width:100%;height:500px;border-radius:8px;background:#1a1a2e;display:block;"></canvas>
+
+<script>
+  import { setupScene } from './scene-setup'
+  import { plane, icosphere, merge, tube, createRng } from '../../src'
+  import { fbm } from '../../src/noise'
+  import { heightGradient, normalGradient } from '../../src/color'
+  import { toThreeMesh } from '../../src/three'
+
+  const ctx = setupScene('patterns-demo', { cameraPos: [6, 5, 8], target: [0, 0.5, 0] })
+  if (ctx) {
+    const terrainNoise = fbm({ seed: 7, scale: 0.2, octaves: 3 })
+    const terrain = plane({ size: 12, segments: 40 })
+      .displaceNoise(terrainNoise, 0.5)
+      .vertexColor(heightGradient([
+        [-0.1, [0.22, 0.38, 0.12]],
+        [0.2, [0.3, 0.45, 0.15]],
+        [0.4, [0.35, 0.4, 0.18]],
+      ]))
+    ctx.scene.add(toThreeMesh(terrain))
+
+    const rand = createRng(42)
+    for (let i = 0; i < 10; i++) {
+      const x = (rand() - 0.5) * 8
+      const z = (rand() - 0.5) * 8
+      const h = 1 + rand() * 1.5
+      const r = 0.3 + rand() * 0.3
+
+      const trunk = tube(
+        [[0,0,0],[0,h*0.4,0]], (t) => 0.04 * (1 - t * 0.5), 5
+      ).vertexColor('#4a2815')
+
+      const canopy = icosphere({ radius: r, subdivisions: 1 })
+        .scale(1, 0.8, 1).jitter(r * 0.08, { seed: i })
+        .translate(0, h * 0.5, 0)
+        .faceColor(normalGradient([0.2, 0.5, 0.1], [0.1, 0.3, 0.05]))
+
+      const obj = toThreeMesh(merge(trunk, canopy))
+      obj.position.set(x, terrainNoise.get(x, z), z)
+      obj.castShadow = true
+      ctx.scene.add(obj)
+    }
+  }
+</script>

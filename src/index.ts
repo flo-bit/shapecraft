@@ -6,7 +6,7 @@ export type { Vec2, Vec3, Vec4, ColorInput, ColorFn, DisplaceFn, WarpFn, NoiseLi
 export { box, sphere, cylinder, plane, cone, torus, icosphere } from './primitives'
 
 // Operations
-export { merge, center, clone } from './ops'
+export { merge, center, clone, loft, tube, thicken } from './ops'
 
 // Modifiers
 export { twist, bend, taper } from './modifiers'

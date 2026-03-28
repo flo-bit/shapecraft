@@ -1,0 +1,88 @@
+# Color
+
+## Vertex coloring
+
+```ts
+mesh.vertexColor('#ff0000')                // flat color (hex string)
+mesh.vertexColor(0xff0000)                 // hex number
+mesh.vertexColor([1, 0, 0])               // RGB tuple, 0-1
+
+mesh.vertexColor((pos, normal, i) => {     // per-vertex function
+  return [pos[1], 0.5, 0.2]
+})
+```
+
+## Face coloring
+
+Colors each face independently (un-indexes geometry automatically). Better for low-poly look.
+
+```ts
+mesh.faceColor((centroid, normal, faceIndex) => {
+  return normal[1] > 0.5 ? '#00ff00' : '#888888'
+})
+```
+
+## Gradients
+
+```ts
+import { gradient, heightGradient, normalGradient } from 'shapecraft'
+
+// Value → color mapping
+const colorize = gradient([
+  [0, '#228B22'],
+  [0.5, '#8B4513'],
+  [1, '#FFFFFF'],
+])
+colorize(0.3)          // returns [r, g, b]
+
+// Map Y position to gradient
+mesh.vertexColor(heightGradient([
+  [0, [0.2, 0.5, 0.1]],
+  [2, [0.6, 0.6, 0.6]],
+]))
+
+// Map normal direction to color (up vs down)
+mesh.vertexColor(normalGradient(
+  [0.15, 0.48, 0.08],  // up-facing color
+  [0.08, 0.28, 0.04],  // down-facing color
+))
+```
+
+## Palette utilities (culori-based)
+
+Interpolation happens in oklch for perceptually smooth results.
+
+```ts
+import { paletteGradient, axisGradient, noiseColor, pickRandom, varyColor } from 'shapecraft'
+
+// Smooth gradient through colors
+const grad = paletteGradient(['#3d6b35', '#8B4513', '#fff'])
+grad(0.5)  // → [r, g, b] at midpoint
+
+// Map palette along a mesh axis
+mesh.vertexColor(axisGradient(
+  ['#5C3A1E', '#8B6B4A'],
+  { axis: 'y', min: 0, max: 2 },
+))
+
+// Map palette via noise
+mesh.vertexColor(noiseColor(['#3a6b2a', '#5a8a4a'], noise, { scale: 2 }))
+
+// Pick a random color from a palette
+const color = pickRandom(['#4a7c3f', '#5a8a4a', '#3d6b35'], rand)
+
+// Generate varied shades (oklch space)
+const shade = varyColor('#4a7c3f', 0.1, rand)
+shade()  // slightly different green each call
+```
+
+## Basic utilities
+
+```ts
+import { lerpColor, parseColorToRgb, hexToRgb, rgbToHex } from 'shapecraft'
+
+lerpColor('#ff0000', '#0000ff', 0.5)  // → [r, g, b]
+parseColorToRgb('#ff0000')            // → [1, 0, 0]
+hexToRgb('#ff0000')                   // → [1, 0, 0]
+rgbToHex(1, 0, 0)                     // → '#ff0000'
+```

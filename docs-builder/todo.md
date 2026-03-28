@@ -1,0 +1,23 @@
+- [x] show mobile sidebar
+- [x] add next and previous buttons
+- [x] fix click in sidebar
+- [x] remove numbers and docs/ folder from the urls
+- [x] make asides github flavored markdown compatible
+- [ ] edit on github link
+- [ ] checkout tagged version of repo
+- [x] fix relative links (seems to work, more testing needed)
+- [ ] add npx command to install either workflow or add docs-builder to your repo
+- [ ] option to not include readme
+- [ ] have readme as first doc
+- [x] option to rename readme
+- [x] automatically add github repo link
+- [ ] download images and other assets and include them in the docs
+- [x] open external links in new tab
+- [ ] create docs for tiny-docs with tiny docs
+
+- [ ] improve search
+- [ ] ally: add skip to content button
+- [ ] fix excalidraw diagrams to work with paths in docs
+- [ ] 3d models, diagrams, maps, audio files, videos
+- [ ] improve checklists, collapsed sections
+- [ ] add powered by tiny-docs link to footer
