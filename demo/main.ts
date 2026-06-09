@@ -7,6 +7,7 @@ import { heightGradient } from '../src/color'
 import { tree, treeSchema, treePresets } from '../src/generators/common-tree'
 import { pine, pineSchema, pinePresets } from '../src/generators/pine-tree'
 import { palm, palmSchema, palmPresets } from '../src/generators/palm-tree'
+import { bush, bushSchema, bushPresets } from '../src/generators/bush'
 import { createEditor } from './editor/editor'
 
 // --- Renderer ---
@@ -86,7 +87,7 @@ scene.add(groundObj)
 
 // --- Tree management ---
 let treeObjects: THREE.Mesh[] = []
-let activeGenerator: 'common' | 'pine' | 'palm' = 'common'
+let activeGenerator: 'common' | 'pine' | 'palm' | 'bush' = 'common'
 
 function clearTrees() {
   for (const obj of treeObjects) {
@@ -104,8 +105,16 @@ function rebuildTrees(opts: Record<string, any>) {
   let rngSeed = 42
   function rng() { rngSeed = (rngSeed * 16807) % 2147483647; return (rngSeed & 0x7fffffff) / 2147483647 }
 
-  const gen = activeGenerator === 'pine' ? pine : activeGenerator === 'palm' ? palm : tree
-  const defaultHeight = activeGenerator === 'pine' ? 3 : activeGenerator === 'palm' ? 3.5 : 2.5
+  const gen = activeGenerator === 'pine' ? pine
+    : activeGenerator === 'palm' ? palm
+    : activeGenerator === 'bush' ? bush
+    : tree
+  // Bushes are sized by `size`; the trees by `height`.
+  const sizeKey = activeGenerator === 'bush' ? 'size' : 'height'
+  const defaultSize = activeGenerator === 'bush' ? 0.6
+    : activeGenerator === 'pine' ? 3
+    : activeGenerator === 'palm' ? 3.5
+    : 2.5
 
   for (let i = 0; i < 15; i++) {
     const x = (rng() - 0.5) * 20
@@ -115,7 +124,7 @@ function rebuildTrees(opts: Record<string, any>) {
     const t = gen({
       ...opts,
       seed: (opts.seed ?? 1) + i,
-      height: (opts.height ?? defaultHeight) * (0.8 + rng() * 0.4),
+      [sizeKey]: (opts[sizeKey] ?? defaultSize) * (0.8 + rng() * 0.4),
     })
     const obj = toThreeMesh(t)
     obj.position.set(x, groundNoise.get(x, z), z)
@@ -130,12 +139,12 @@ function rebuildTrees(opts: Record<string, any>) {
 let currentEditorEl: HTMLElement | null = null
 let lastOpts: Record<string, any> = {}
 
-function mountEditor(type: 'common' | 'pine') {
+function mountEditor(type: 'common' | 'pine' | 'palm' | 'bush') {
   activeGenerator = type
   if (currentEditorEl) currentEditorEl.remove()
 
-  const schema = type === 'pine' ? pineSchema : type === 'palm' ? palmSchema : treeSchema
-  const presets = type === 'pine' ? pinePresets : type === 'palm' ? palmPresets : treePresets
+  const schema = type === 'pine' ? pineSchema : type === 'palm' ? palmSchema : type === 'bush' ? bushSchema : treeSchema
+  const presets = type === 'pine' ? pinePresets : type === 'palm' ? palmPresets : type === 'bush' ? bushPresets : treePresets
 
   currentEditorEl = createEditor(schema, {
     onChange: (opts) => { lastOpts = opts; rebuildTrees(opts) },
@@ -144,9 +153,9 @@ function mountEditor(type: 'common' | 'pine') {
   // Add generator switcher at the top
   const switcher = document.createElement('div')
   switcher.style.cssText = 'margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid #333; display: flex; gap: 4px;'
-  for (const t of ['common', 'pine', 'palm'] as const) {
+  for (const t of ['common', 'pine', 'palm', 'bush'] as const) {
     const btn = document.createElement('button')
-    btn.textContent = t === 'common' ? 'Common' : t === 'pine' ? 'Pine' : 'Palm'
+    btn.textContent = t === 'common' ? 'Common' : t === 'pine' ? 'Pine' : t === 'palm' ? 'Palm' : 'Bush'
     btn.style.cssText = `flex: 1; padding: 6px; border: 1px solid #444; background: ${t === type ? '#3a5a3a' : '#222'}; color: #ddd; cursor: pointer; font-size: 12px;`
     btn.addEventListener('click', () => { if (t !== activeGenerator) mountEditor(t) })
     switcher.appendChild(btn)

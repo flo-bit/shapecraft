@@ -1,9 +1,7 @@
-import { icosphere, cylinder } from '../primitives'
 import { merge, snow as applySnow } from '../ops'
-import { createRng } from '../core/rng'
+import { setup, trunk, foliageBlob, facetShade } from '../build'
 import { scatterOnSphere } from '../core/scatter'
-import { resolveOptions } from '../core/schema'
-import { paletteGradient, pickRandom, type Palette } from '../color'
+import { pickRandom } from '../color'
 import { UberNoise } from '../noise'
 import type { Mesh } from '../core/mesh'
 import type { OptionSchema, OptionInput } from '../core/schema'
@@ -54,11 +52,7 @@ export const treePresets: Record<string, Partial<TreeOptions>> = {
 }
 
 export function tree(options: TreeOptions = {}): Mesh {
-  // Create rng from seed before resolving (needed for [min,max] ranges)
-  const seedOpt = options.seed ?? treeSchema.seed.default
-  const seed = Array.isArray(seedOpt) ? seedOpt[0] : seedOpt
-  const rng = createRng(seed)
-  const o = resolveOptions(treeSchema, options, treePresets, rng)
+  const { o, rng } = setup(treeSchema, options, treePresets)
 
   // Independent streams per concern: drawing from one never perturbs another,
   // so toggling (e.g.) snow can't shift the trunk or canopy randomness.
@@ -79,35 +73,26 @@ export function tree(options: TreeOptions = {}): Mesh {
   const trunkHeight = o.height * o.trunkRatio
   const leanX = (trunkRng() - 0.5) * o.lean
   const leanZ = (trunkRng() - 0.5) * o.lean
-  const trunkGrad = paletteGradient(o.trunkColors)
-  const taperExp = o.trunkTaper
 
-  const trunkNoise = new UberNoise({ seed: trunkRng.seed(), scale: 8 })
-  const trunk = cylinder({ radius: 1, radiusTop: 1, height: trunkHeight, segments: 5, heightSegments: 4 })
-    .translate(0, trunkHeight / 2, 0)
-    .warp((pos) => {
-      const t = Math.max(0, Math.min(1, pos[1] / trunkHeight))
-      const radius = topRadius + (baseRadius - topRadius) * Math.pow(1 - t, taperExp)
-      // Noise-based displacement scaled by local radius (thin top = less displacement)
-      const jitterAmount = radius * 0.3
-      const nx = trunkNoise.get(pos[0] * 100, pos[1], pos[2] * 100) * jitterAmount
-      const nz = trunkNoise.get(pos[0] * 100 + 500, pos[1] + 500, pos[2] * 100) * jitterAmount
-      return [
-        pos[0] * radius + leanX * t * t + nx,
-        pos[1],
-        pos[2] * radius + leanZ * t * t + nz,
-      ]
-    })
-    .vertexColor((pos) => {
-      const t = Math.max(0, Math.min(1, pos[1] / trunkHeight))
-      return trunkGrad(t)
-    })
+  const trunkMesh = trunk({
+    height: trunkHeight,
+    baseRadius,
+    topRadius,
+    taper: o.trunkTaper,
+    lean: [leanX, leanZ],
+    noiseSeed: trunkRng.seed(),
+    noiseScale: 8,
+    noiseAmount: 0.3,
+    segments: 5,
+    heightSegments: 4,
+    colors: o.trunkColors,
+  })
 
   // Trunk top position after lean
   const topOffsetX = leanX
   const topOffsetZ = leanZ
 
-  if (!o.showCanopy) return trunk
+  if (!o.showCanopy) return trunkMesh
 
   // Canopy
   const canopyParts: Mesh[] = []
@@ -118,20 +103,16 @@ export function tree(options: TreeOptions = {}): Mesh {
   const colorNoiseSeed = colorRng.seed()
 
   function canopyBlob(r: number): Mesh {
-    const noiseSeed = canopyRng.seed()
-    const jitterSeed = canopyRng.seed()
-    const noise = new UberNoise({ seed: noiseSeed, scale: 0.5, octaves: 3 })
-    let blob = icosphere({ radius: r, subdivisions: 0 })
-      .subdivideAdaptive(edgeLen)
-      .warp((pos) => {
-        const len = Math.sqrt(pos[0] * pos[0] + pos[1] * pos[1] + pos[2] * pos[2]) || 1
-        const nx = pos[0] / len, ny = pos[1] / len, nz = pos[2] / len
-        const d = r + noise.get(pos[0], pos[1], pos[2]) * r * o.canopyNoise
-        return [nx * d, ny * d, nz * d]
-      })
-      .jitter(r * o.jitter, { seed: jitterSeed })
-
-    return blob
+    return foliageBlob({
+      radius: r,
+      detail: edgeLen,
+      noiseSeed: canopyRng.seed(),
+      noiseScale: 0.5,
+      noiseOctaves: 3,
+      noiseAmount: o.canopyNoise,
+      jitter: r * o.jitter,
+      jitterSeed: canopyRng.seed(),
+    })
   }
 
   // Face coloring
@@ -144,26 +125,21 @@ export function tree(options: TreeOptions = {}): Mesh {
   const snowNoise = hasSnow ? new UberNoise({ seed: snowRng.seed(), scale: 2 }) : null
   const snowThreshold = Math.sin(o.snowAngle * Math.PI / 180)
 
-  function blobFaceColor(): (centroid: [number, number, number], normal: [number, number, number], faceIndex: number) => [number, number, number] {
+  function blobFaceColor() {
     // Pick colors upfront so we don't draw inside the per-face loop. Each draw comes
     // from its own stream, so snow being on/off never shifts the base canopy color.
     const base = pickRandom(o.canopyColors, colorRng)
-    const snow = (hasSnow && !useGeoSnow) ? pickRandom(o.snowColors, snowRng) : null
-    return (centroid, normal) => {
-      const top = normal[1] * 0.5 + 0.5
-
-      // Snow on upward-facing faces
-      if (snow && snowNoise) {
-        const n = snowNoise.get(centroid[0], centroid[1], centroid[2]) * 0.15
-        if (normal[1] + n > snowThreshold) {
-          return snow
-        }
-      }
-
-      const n = colorNoise.get(centroid[0], centroid[1], centroid[2]) * 0.15
-      const darken = 0.65 + top * 0.35 + n
-      return [base[0] * darken, base[1] * darken, base[2] * darken]
-    }
+    const snowCol = (hasSnow && !useGeoSnow) ? pickRandom(o.snowColors, snowRng) : null
+    return facetShade({
+      base,
+      noise: colorNoise,
+      ambient: 0.65,
+      range: 0.35,
+      noiseAmount: 0.15,
+      snow: snowCol && snowNoise
+        ? { color: snowCol, noise: snowNoise, threshold: snowThreshold, noiseAmount: 0.15 }
+        : undefined,
+    })
   }
 
   // Main sphere
@@ -194,7 +170,7 @@ export function tree(options: TreeOptions = {}): Mesh {
     }
   }
 
-  const result = merge(trunk, ...canopyParts)
+  const result = merge(trunkMesh, ...canopyParts)
   if (!useGeoSnow) return result
 
   return applySnow(result, {

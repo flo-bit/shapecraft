@@ -11,7 +11,8 @@
     "./ops": "./src/ops/index.ts",
     "./color": "./src/color/index.ts",
     "./uv": "./src/uv/index.ts",
-    "./generators": "./src/generators/index.ts"
+    "./generators": "./src/generators/index.ts",
+    "./build": "./src/build/index.ts"
   },
   "scripts": {
     "dev": "vite demo",

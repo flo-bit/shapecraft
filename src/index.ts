@@ -25,6 +25,10 @@ export { createRng } from './core/rng'
 export type { Rng } from './core/rng'
 export { scatterOnSphere } from './core/scatter'
 
+// Build — composable model primitives
+export { setup, trunk, foliageBlob, facetShade, heightShade, scatterOnSurface } from './build'
+export type { TrunkOptions, FoliageBlobOptions, FacetShadeOptions, SurfacePoint, ScatterOnSurfaceOptions } from './build'
+
 // Schema & options
 export { resolveOptions } from './core/schema'
 export type { OptionSchema, OptionDef, OptionValues, OptionInput, Randomizable } from './core/schema'
@@ -33,3 +37,4 @@ export type { OptionSchema, OptionDef, OptionValues, OptionInput, Randomizable }
 export { tree, treeSchema, treePresets } from './generators'
 export { pine, pineSchema, pinePresets } from './generators'
 export { palm, palmSchema, palmPresets } from './generators'
+export { bush, bushSchema, bushPresets } from './generators'

@@ -1,0 +1,5 @@
+export { setup } from './setup'
+export { trunk, type TrunkOptions } from './trunk'
+export { foliageBlob, type FoliageBlobOptions } from './foliage'
+export { facetShade, heightShade, type FacetShadeOptions } from './shade'
+export { scatterOnSurface, type SurfacePoint, type ScatterOnSurfaceOptions } from './surface'

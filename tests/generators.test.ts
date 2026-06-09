@@ -2,12 +2,14 @@ import { describe, it, expect } from 'vitest'
 import { tree } from '../src/generators/common-tree'
 import { pine } from '../src/generators/pine-tree'
 import { palm } from '../src/generators/palm-tree'
+import { bush } from '../src/generators/bush'
 import type { Mesh } from '../src/core/mesh'
 
 const generators = [
   { name: 'tree', gen: tree },
   { name: 'pine', gen: pine },
   { name: 'palm', gen: palm },
+  { name: 'bush', gen: bush },
 ] as const
 
 // Golden snapshots captured after the named-stream RNG migration. A change here means
@@ -16,6 +18,7 @@ const golden: Record<string, { verts: number }> = {
   tree: { verts: 1830 },
   pine: { verts: 840 },
   palm: { verts: 3630 },
+  bush: { verts: 3600 },
 }
 
 function allFinite(m: Mesh): boolean {

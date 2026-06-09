@@ -1,7 +1,6 @@
-import { cylinder, cone } from '../primitives'
+import { cone } from '../primitives'
 import { merge, snow as applySnow } from '../ops'
-import { createRng } from '../core/rng'
-import { resolveOptions } from '../core/schema'
+import { setup, trunk, facetShade } from '../build'
 import { paletteGradient, pickRandom } from '../color'
 import { UberNoise } from '../noise'
 import type { Mesh } from '../core/mesh'
@@ -58,10 +57,7 @@ export const pinePresets: Record<string, Partial<PineOptions>> = {
 }
 
 export function pine(options: PineOptions = {}): Mesh {
-  const seedOpt = options.seed ?? pineSchema.seed.default
-  const seed = Array.isArray(seedOpt) ? seedOpt[0] : seedOpt
-  const rng = createRng(seed)
-  const o = resolveOptions(pineSchema, options, pinePresets, rng)
+  const { o, rng } = setup(pineSchema, options, pinePresets)
 
   // Independent streams per concern (see common-tree for rationale).
   const trunkRng = rng.stream('trunk')
@@ -76,27 +72,20 @@ export function pine(options: PineOptions = {}): Mesh {
   const trunkHeight = o.height * o.trunkRatio
   const leanX = (trunkRng() - 0.5) * o.lean
   const leanZ = (trunkRng() - 0.5) * o.lean
-  const trunkGrad = paletteGradient(o.trunkColors)
 
-  const trunkNoise = new UberNoise({ seed: trunkRng.seed(), scale: o.trunkNoiseScale })
-  const trunk = cylinder({ radius: 1, radiusTop: 1, height: trunkHeight, segments: 5, heightSegments: 3 })
-    .translate(0, trunkHeight / 2, 0)
-    .warp((pos) => {
-      const t = Math.max(0, Math.min(1, pos[1] / trunkHeight))
-      const radius = topRadius + (baseRadius - topRadius) * Math.pow(1 - t, o.trunkTaper)
-      const jitterAmt = radius * o.trunkNoiseAmt
-      const nx = trunkNoise.get(pos[0] * 100, pos[1], pos[2] * 100) * jitterAmt
-      const nz = trunkNoise.get(pos[0] * 100 + 500, pos[1] + 500, pos[2] * 100) * jitterAmt
-      return [
-        pos[0] * radius + leanX * t * t + nx,
-        pos[1],
-        pos[2] * radius + leanZ * t * t + nz,
-      ]
-    })
-    .vertexColor((pos) => {
-      const t = Math.max(0, Math.min(1, pos[1] / trunkHeight))
-      return trunkGrad(t)
-    })
+  const trunkMesh = trunk({
+    height: trunkHeight,
+    baseRadius,
+    topRadius,
+    taper: o.trunkTaper,
+    lean: [leanX, leanZ],
+    noiseSeed: trunkRng.seed(),
+    noiseScale: o.trunkNoiseScale,
+    noiseAmount: o.trunkNoiseAmt,
+    segments: 5,
+    heightSegments: 3,
+    colors: o.trunkColors,
+  })
 
   // Canopy — stacked pyramid cones
   const canopyParts: Mesh[] = []
@@ -161,21 +150,18 @@ export function pine(options: PineOptions = {}): Mesh {
 
     // Face color
     const base = canopyGrad(t)
-    const snow = (hasSnow && !useGeoSnow) ? pickRandom(o.snowColors, snowRng) : null
+    const snowCol = (hasSnow && !useGeoSnow) ? pickRandom(o.snowColors, snowRng) : null
 
-    layer = layer.faceColor((centroid, normal) => {
-      if (snow && snowNoise) {
-        const n = snowNoise.get(centroid[0], centroid[1], centroid[2]) * 0.15
-        if (normal[1] + n > snowThreshold) {
-          return snow
-        }
-      }
-
-      const top = normal[1] * 0.5 + 0.5
-      const n = colorNoise.get(centroid[0], centroid[1], centroid[2]) * 0.15
-      const darken = 0.6 + top * 0.4 + n
-      return [base[0] * darken, base[1] * darken, base[2] * darken]
-    })
+    layer = layer.faceColor(facetShade({
+      base,
+      noise: colorNoise,
+      ambient: 0.6,
+      range: 0.4,
+      noiseAmount: 0.15,
+      snow: snowCol && snowNoise
+        ? { color: snowCol, noise: snowNoise, threshold: snowThreshold, noiseAmount: 0.15 }
+        : undefined,
+    }))
 
     canopyParts.push(layer)
   }
@@ -184,7 +170,7 @@ export function pine(options: PineOptions = {}): Mesh {
   const swayNoiseX = new UberNoise({ seed: swayRng.seed(), scale: o.swayScale })
   const swayNoiseZ = new UberNoise({ seed: swayRng.seed(), scale: o.swayScale })
 
-  const result = merge(trunk, ...canopyParts)
+  const result = merge(trunkMesh, ...canopyParts)
     .warp((pos) => {
       const t = pos[1] / o.height
       const sway = t * t * o.swayAmount

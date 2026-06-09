@@ -1,7 +1,6 @@
 import { sphere } from '../primitives'
-import { merge, tube, loft, thicken, snow as applySnow } from '../ops'
-import { createRng } from '../core/rng'
-import { resolveOptions } from '../core/schema'
+import { merge, loft, thicken, snow as applySnow } from '../ops'
+import { setup, trunk, facetShade } from '../build'
 import { paletteGradient, pickRandom } from '../color'
 import { UberNoise } from '../noise'
 import type { Mesh } from '../core/mesh'
@@ -59,10 +58,7 @@ export const palmPresets: Record<string, Partial<PalmOptions>> = {
 }
 
 export function palm(options: PalmOptions = {}): Mesh {
-  const seedOpt = options.seed ?? palmSchema.seed.default
-  const seed = Array.isArray(seedOpt) ? seedOpt[0] : seedOpt
-  const rng = createRng(seed)
-  const o = resolveOptions(palmSchema, options, palmPresets, rng)
+  const { o, rng } = setup(palmSchema, options, palmPresets)
 
   // Independent streams per concern (see common-tree for rationale).
   const trunkRng = rng.stream('trunk')
@@ -95,20 +91,18 @@ export function palm(options: PalmOptions = {}): Mesh {
   // Trunk top position
   const topPt = trunkPath[trunkPath.length - 1]
 
-  const trunkMesh = tube(
-    trunkPath,
-    (t) => {
+  const trunkMesh = trunk({
+    path: trunkPath,
+    radiusProfile: (t) => {
       const taper = baseRadius * (1 - t * o.trunkTaper)
       const wave = 1 + Math.sin(t * Math.PI * 14) * 0.15
       return taper * wave
     },
-    o.trunkSegments,
-  )
-    .jitter(baseRadius * 0.1, { seed: trunkRng.seed() })
-    .vertexColor((pos) => {
-      const t = Math.max(0, Math.min(1, pos[1] / trunkHeight))
-      return paletteGradient(o.trunkColors)(t)
-    })
+    segments: o.trunkSegments,
+    jitter: baseRadius * 0.1,
+    jitterSeed: trunkRng.seed(),
+    colors: o.trunkColors,
+  })
 
   // --- Fronds: flat planes thickened, arcing outward and drooping ---
   const frondParts: Mesh[] = []
@@ -181,18 +175,18 @@ export function palm(options: PalmOptions = {}): Mesh {
 
     // Color
     const base = frondGrad(i / frondCount)
-    const snow = (hasSnow && !useGeoSnow) ? pickRandom(o.snowColors, snowRng) : null
+    const snowCol = (hasSnow && !useGeoSnow) ? pickRandom(o.snowColors, snowRng) : null
 
-    const colored = frondMesh.faceColor((centroid, normal) => {
-      if (snow && snowNoise) {
-        const n = snowNoise.get(centroid[0], centroid[1], centroid[2]) * 0.15
-        if (normal[1] + n > snowThreshold) return snow
-      }
-      const top = normal[1] * 0.5 + 0.5
-      const n = colorNoise.get(centroid[0], centroid[1], centroid[2]) * 0.1
-      const darken = 0.6 + top * 0.4 + n
-      return [base[0] * darken, base[1] * darken, base[2] * darken]
-    })
+    const colored = frondMesh.faceColor(facetShade({
+      base,
+      noise: colorNoise,
+      ambient: 0.6,
+      range: 0.4,
+      noiseAmount: 0.1,
+      snow: snowCol && snowNoise
+        ? { color: snowCol, noise: snowNoise, threshold: snowThreshold, noiseAmount: 0.15 }
+        : undefined,
+    }))
 
     frondParts.push(colored)
   }
