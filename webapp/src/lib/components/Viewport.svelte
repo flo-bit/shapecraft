@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type * as THREE from 'three';
 	import { Canvas } from '@threlte/core';
-	import { Box, Dices, Grid3x3, TreeDeciduous, Sprout, Mountain } from '@lucide/svelte';
+	import { Box, Grid3x3, TreeDeciduous, Sprout, Mountain } from '@lucide/svelte';
 	import type { GeneratorEntry } from '$lib/registry';
 	import Scene from './Scene.svelte';
 
@@ -10,15 +10,13 @@
 		entry,
 		seed,
 		tris,
-		error,
-		ondice
+		error
 	}: {
 		model: THREE.Mesh | null;
 		entry: GeneratorEntry;
 		seed: number | undefined;
 		tris: number;
 		error: string | null;
-		ondice: () => void;
 	} = $props();
 
 	let showGrid = $state(false);
@@ -73,24 +71,10 @@
 		</button>
 	</div>
 
-	<!-- status -->
-	<div class="{float} bottom-4 left-4 flex items-center gap-2.5 px-3 py-[7px]">
-		{#if error}
+	{#if error}
+		<div class="{float} bottom-4 left-4 flex items-center gap-2.5 px-3 py-[7px]">
 			<span class="size-1.5 rounded-full bg-red-400"></span>
 			<span class="mono text-[11px] text-red-300">{error}</span>
-		{:else}
-			<span class="size-1.5 rounded-full bg-accent"></span>
-			<span class="mono text-[11px] text-white/80">{tris.toLocaleString()} tris · GLB ready</span>
-		{/if}
-	</div>
-
-	<!-- randomize -->
-	<button
-		type="button"
-		class="absolute bottom-4 left-1/2 grid size-10.5 -translate-x-1/2 place-items-center rounded-[10px] bg-accent text-accent-ink shadow-lg hover:bg-[#b6f37e]"
-		title="Randomize seed"
-		onclick={ondice}
-	>
-		<Dices size={20} />
-	</button>
+		</div>
+	{/if}
 </div>

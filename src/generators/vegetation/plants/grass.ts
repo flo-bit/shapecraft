@@ -5,15 +5,15 @@ import type { Vec3 } from '../../../core/types'
 import type { OptionSchema, OptionInput } from '../../../core/schema'
 
 export const grassSchema = {
-  seed:        { type: 'integer',     default: 1,    min: 1,    max: 100,  label: 'Seed' },
-  blades:      { type: 'integer',     default: 16,   min: 3,    max: 60,   label: 'Blades' },
-  height:      { type: 'range',       default: 0.6,  min: 0.15, max: 1.6,  step: 0.05, label: 'Height' },
-  bladeWidth:  { type: 'range',       default: 0.035,min: 0.01, max: 0.1,  step: 0.005, label: 'Blade Width' },
-  spread:      { type: 'range',       default: 0.1,  min: 0,    max: 0.4,  step: 0.01, label: 'Base Spread' },
-  fan:         { type: 'range',       default: 0.25, min: 0,    max: 0.6,  step: 0.02, label: 'Tip Fan' },
-  curve:       { type: 'range',       default: 0.8,  min: 0,    max: 1.5,  step: 0.05, label: 'Curve' },
-  segments:    { type: 'integer',     default: 4,    min: 2,    max: 8,    label: 'Segments' },
-  colors:      { type: 'color-array', default: ['#3a6a1e', '#4e8a28', '#7ab33e'], min: 1, max: 6, label: 'Colors' },
+  seed:        { type: 'integer',     default: 1,    min: 1,    max: 100,  label: 'Seed', group: 'General' },
+  blades:      { type: 'integer',     default: 16,   min: 3,    max: 60,   label: 'Blades', group: 'Shape' },
+  height:      { type: 'range',       default: 0.6,  min: 0.15, max: 1.6,  step: 0.05, label: 'Height', group: 'Shape' },
+  bladeWidth:  { type: 'range',       default: 0.035,min: 0.01, max: 0.1,  step: 0.005, label: 'Blade Width', group: 'Shape' },
+  spread:      { type: 'range',       default: 0.1,  min: 0,    max: 0.4,  step: 0.01, label: 'Base Spread', group: 'Shape' },
+  fan:         { type: 'range',       default: 0.25, min: 0,    max: 0.6,  step: 0.02, label: 'Tip Fan', group: 'Shape' },
+  curve:       { type: 'range',       default: 0.8,  min: 0,    max: 1.5,  step: 0.05, label: 'Curve', group: 'Shape' },
+  segments:    { type: 'integer',     default: 4,    min: 2,    max: 8,    label: 'Segments', group: 'Shape' },
+  colors:      { type: 'color-array', default: ['#3a6a1e', '#4e8a28', '#7ab33e'], min: 1, max: 6, label: 'Colors', group: 'Colors' },
 } satisfies OptionSchema
 
 export type GrassOptions = Partial<OptionInput<typeof grassSchema>> & { preset?: string }

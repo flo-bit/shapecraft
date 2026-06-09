@@ -3,31 +3,33 @@ import { setup, trunk, foliageBlob, facetShade } from '../../../build'
 import { scatterOnSphere } from '../../../core/scatter'
 import { pickRandom } from '../../../color'
 import { UberNoise } from '../../../noise'
+import { group, part, Asset } from '../../../core/asset'
+import { VERTEX_COLOR_MATERIAL } from '../../../core/material'
 import type { Mesh } from '../../../core/mesh'
 import type { OptionSchema, OptionInput } from '../../../core/schema'
 
 export const treeSchema = {
-  seed:           { type: 'integer',     default: 1,    min: 1,    max: 100,  label: 'Seed' },
-  height:         { type: 'range',       default: 2.5,  min: 0.5,  max: 6,    step: 0.1,  label: 'Height' },
-  trunkRadius:    { type: 'range',       default: 0.12, min: 0.03, max: 0.4,  step: 0.01, label: 'Trunk Radius' },
-  trunkRatio:     { type: 'range',       default: 0.45, min: 0.2,  max: 0.7,  step: 0.01, label: 'Trunk Ratio' },
-  trunkTaper:     { type: 'range',       default: 2,    min: 0.5,  max: 5,    step: 0.1,  label: 'Root Flare' },
-  trunkTopScale:  { type: 'range',       default: 0.5,  min: 0.02, max: 1,    step: 0.02, label: 'Trunk Top Scale' },
-  lean:           { type: 'range',       default: 0.4,  min: 0,    max: 1.5,  step: 0.05, label: 'Lean' },
-  showCanopy:     { type: 'boolean',     default: true, label: 'Show Canopy' },
-  canopyRadius:   { type: 'range',       default: 0.8,  min: 0.2,  max: 2,    step: 0.05, label: 'Canopy Size' },
-  canopySquash:   { type: 'range',       default: 0.8,  min: 0.3,  max: 1,    step: 0.05, label: 'Canopy Squash' },
-  canopyNoise:    { type: 'range',       default: 0.5,  min: 0,    max: 1.5,  step: 0.05, label: 'Canopy Noise' },
-  canopyDetail:   { type: 'range',       default: 0.45, min: 0.15, max: 1,    step: 0.05, label: 'Canopy Detail' },
-  canopyBumps:    { type: 'integer',     default: 3,    min: 0,    max: 8,    label: 'Canopy Bumps' },
-  bumpSize:       { type: 'range',       default: 0.4,  min: 0.1,  max: 0.8,  step: 0.05, label: 'Bump Size' },
-  canopyOffset:   { type: 'range',       default: 0.6,  min: 0,    max: 1.2,  step: 0.05, label: 'Canopy Offset' },
-  jitter:         { type: 'range',       default: 0.04, min: 0,    max: 0.15, step: 0.005, label: 'Jitter' },
-  snowColors:     { type: 'color-array', default: [], min: 0, max: 6, label: 'Snow Colors' },
-  snowAngle:      { type: 'range',       default: 30, min: 0, max: 80, step: 5, label: 'Snow Min Angle (°)' },
-  snowDepth:      { type: 'range',       default: 0,  min: 0, max: 0.3, step: 0.01, label: 'Snow Depth' },
-  trunkColors:    { type: 'color-array', default: ['#1a0f06', '#4a2815', '#5a3520'], min: 2, max: 6, label: 'Trunk Colors' },
-  canopyColors:   { type: 'color-array', default: ['#1e6b10', '#2a7518', '#238020', '#2d8a1e'], min: 1, max: 8, label: 'Canopy Colors' },
+  seed:           { type: 'integer',     default: 1,    min: 1,    max: 100,  label: 'Seed', group: 'General' },
+  height:         { type: 'range',       default: 2.5,  min: 0.5,  max: 6,    step: 0.1,  label: 'Height', group: 'Trunk' },
+  trunkRadius:    { type: 'range',       default: 0.12, min: 0.03, max: 0.4,  step: 0.01, label: 'Trunk Radius', group: 'Trunk' },
+  trunkRatio:     { type: 'range',       default: 0.45, min: 0.2,  max: 0.7,  step: 0.01, label: 'Trunk Ratio', group: 'Trunk' },
+  trunkTaper:     { type: 'range',       default: 2,    min: 0.5,  max: 5,    step: 0.1,  label: 'Root Flare', group: 'Trunk' },
+  trunkTopScale:  { type: 'range',       default: 0.5,  min: 0.02, max: 1,    step: 0.02, label: 'Trunk Top Scale', group: 'Trunk' },
+  lean:           { type: 'range',       default: 0.4,  min: 0,    max: 1.5,  step: 0.05, label: 'Lean', group: 'Trunk' },
+  showCanopy:     { type: 'boolean',     default: true, label: 'Show Canopy', group: 'Canopy' },
+  canopyRadius:   { type: 'range',       default: 0.8,  min: 0.2,  max: 2,    step: 0.05, label: 'Canopy Size', group: 'Canopy' },
+  canopySquash:   { type: 'range',       default: 0.8,  min: 0.3,  max: 1,    step: 0.05, label: 'Canopy Squash', group: 'Canopy' },
+  canopyNoise:    { type: 'range',       default: 0.5,  min: 0,    max: 1.5,  step: 0.05, label: 'Canopy Noise', group: 'Canopy' },
+  canopyDetail:   { type: 'range',       default: 0.45, min: 0.15, max: 1,    step: 0.05, label: 'Canopy Detail', group: 'Canopy' },
+  canopyBumps:    { type: 'integer',     default: 3,    min: 0,    max: 8,    label: 'Canopy Bumps', group: 'Canopy' },
+  bumpSize:       { type: 'range',       default: 0.4,  min: 0.1,  max: 0.8,  step: 0.05, label: 'Bump Size', group: 'Canopy' },
+  canopyOffset:   { type: 'range',       default: 0.6,  min: 0,    max: 1.2,  step: 0.05, label: 'Canopy Offset', group: 'Canopy' },
+  jitter:         { type: 'range',       default: 0.04, min: 0,    max: 0.15, step: 0.005, label: 'Jitter', group: 'General' },
+  snowColors:     { type: 'color-array', default: [], min: 0, max: 6, label: 'Snow Colors', group: 'Snow' },
+  snowAngle:      { type: 'range',       default: 30, min: 0, max: 80, step: 5, label: 'Snow Min Angle (°)', group: 'Snow' },
+  snowDepth:      { type: 'range',       default: 0,  min: 0, max: 0.3, step: 0.01, label: 'Snow Depth', group: 'Snow' },
+  trunkColors:    { type: 'color-array', default: ['#1a0f06', '#4a2815', '#5a3520'], min: 2, max: 6, label: 'Trunk Colors', group: 'Colors' },
+  canopyColors:   { type: 'color-array', default: ['#1e6b10', '#2a7518', '#238020', '#2d8a1e'], min: 1, max: 8, label: 'Canopy Colors', group: 'Colors' },
 } satisfies OptionSchema
 
 export type TreeOptions = Partial<OptionInput<typeof treeSchema>> & { preset?: string }
@@ -51,7 +53,7 @@ export const treePresets: Record<string, Partial<TreeOptions>> = {
   },
 }
 
-export function tree(options: TreeOptions = {}): Mesh {
+export function tree(options: TreeOptions = {}): Asset {
   const { o, rng } = setup(treeSchema, options, treePresets)
 
   // Independent streams per concern: drawing from one never perturbs another,
@@ -92,7 +94,9 @@ export function tree(options: TreeOptions = {}): Mesh {
   const topOffsetX = leanX
   const topOffsetZ = leanZ
 
-  if (!o.showCanopy) return trunkMesh
+  if (!o.showCanopy) {
+    return group('tree', [part('trunk', trunkMesh, VERTEX_COLOR_MATERIAL)])
+  }
 
   // Canopy
   const canopyParts: Mesh[] = []
@@ -170,13 +174,20 @@ export function tree(options: TreeOptions = {}): Mesh {
     }
   }
 
-  const result = merge(trunkMesh, ...canopyParts)
-  if (!useGeoSnow) return result
+  const canopy = merge(...canopyParts)
+  const treeAsset = group('tree', [
+    part('trunk', trunkMesh, VERTEX_COLOR_MATERIAL),
+    part('canopy', canopy, VERTEX_COLOR_MATERIAL),
+  ])
+  if (!useGeoSnow) return treeAsset
 
-  return applySnow(result, {
+  // Snow as its own part, computed from the canopy only (it settles on leaves, not bark).
+  const snowShell = applySnow(canopy, {
     depth: o.snowDepth,
     minAngle: 90 - o.snowAngle,
     color: pickRandom(o.snowColors, snowRng),
     seed: snowRng.seed(),
+    merge: false,
   })
+  return treeAsset.add(part('snow', snowShell, VERTEX_COLOR_MATERIAL))
 }

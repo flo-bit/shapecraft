@@ -1,5 +1,6 @@
 import type { OptionSchema } from 'shapecraft/core/schema';
 import type { Mesh } from 'shapecraft/core/mesh';
+import type { Asset } from 'shapecraft/core/asset';
 import {
 	tree,
 	treeSchema,
@@ -28,6 +29,9 @@ import {
 	leafyTree,
 	leafyTreeSchema,
 	leafyTreePresets,
+	mushroom,
+	mushroomSchema,
+	mushroomPresets,
 	rock,
 	rockSchema,
 	rockPresets,
@@ -56,7 +60,8 @@ export interface GeneratorEntry {
 	id: string;
 	label: string;
 	category: CategoryId;
-	gen: (opts: Record<string, unknown>) => Mesh;
+	// Generators are migrating from single Mesh to multi-part Asset; toThreeMesh handles both.
+	gen: (opts: Record<string, unknown>) => Mesh | Asset;
 	schema: OptionSchema;
 	presets: Record<string, Record<string, unknown>>;
 	/** Rough camera distance that frames the default model nicely */
@@ -144,6 +149,15 @@ export const GENERATORS: GeneratorEntry[] = [
 		schema: flowerSchema,
 		presets: flowerPresets,
 		viewDistance: 2.5
+	},
+	{
+		id: 'mushroom',
+		label: 'Mushroom',
+		category: 'plants',
+		gen: mushroom,
+		schema: mushroomSchema,
+		presets: mushroomPresets,
+		viewDistance: 1.6
 	},
 	{
 		id: 'rock',

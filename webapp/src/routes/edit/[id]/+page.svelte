@@ -42,7 +42,7 @@
 	<div class="flex min-h-0 flex-1">
 		<Rail active={entry.category} />
 		<TypeList {entry} />
-		<Viewport {model} {entry} {seed} {tris} error={result.error} ondice={dice} />
-		<ParamPanel {entry} onexport={doExport} />
+		<Viewport {model} {entry} {seed} {tris} error={result.error} />
+		<ParamPanel {entry} />
 	</div>
 </div>

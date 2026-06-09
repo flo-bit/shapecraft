@@ -7,21 +7,21 @@ import type { Mesh } from '../../../core/mesh'
 import type { OptionSchema, OptionInput } from '../../../core/schema'
 
 export const mushroomSchema = {
-  seed:       { type: 'integer',     default: 1,     min: 1,     max: 100,  label: 'Seed' },
-  height:     { type: 'range',       default: 0.35,  min: 0.1,   max: 1.2,  step: 0.05,  label: 'Stem Height' },
-  stemRadius: { type: 'range',       default: 0.045, min: 0.015, max: 0.15, step: 0.005, label: 'Stem Radius' },
-  lean:       { type: 'range',       default: 0.1,   min: 0,     max: 0.4,  step: 0.02,  label: 'Lean' },
-  capRadius:  { type: 'range',       default: 0.16,  min: 0.05,  max: 0.5,  step: 0.01,  label: 'Cap Radius' },
-  capSquash:  { type: 'range',       default: 0.6,   min: 0.25,  max: 1.2,  step: 0.05,  label: 'Cap Squash' },
-  capCurl:    { type: 'range',       default: 0.35,  min: 0,     max: 0.8,  step: 0.05,  label: 'Cap Curl' },
-  capNoise:   { type: 'range',       default: 0.12,  min: 0,     max: 0.5,  step: 0.02,  label: 'Cap Lumpiness' },
-  count:      { type: 'integer',     default: 1,     min: 1,     max: 9,    label: 'Cluster' },
-  spread:     { type: 'range',       default: 1.0,   min: 0.4,   max: 2,    step: 0.05,  label: 'Spread' },
-  spots:      { type: 'integer',     default: 0,     min: 0,     max: 20,   label: 'Spots' },
-  spotColor:  { type: 'color',       default: '#f2efe6', label: 'Spot Color' },
-  capColors:  { type: 'color-array', default: ['#9c6b3f', '#a87844', '#8a5a32'], min: 1, max: 6, label: 'Cap Colors' },
-  gillColor:  { type: 'color',       default: '#e8dcc2', label: 'Gill Color' },
-  stemColors: { type: 'color-array', default: ['#ddd2bc', '#cfc4ae'], min: 1, max: 4, label: 'Stem Colors' },
+  seed:       { type: 'integer',     default: 1,     min: 1,     max: 100,  label: 'Seed', group: 'General' },
+  height:     { type: 'range',       default: 0.35,  min: 0.1,   max: 1.2,  step: 0.05,  label: 'Stem Height', group: 'Stem' },
+  stemRadius: { type: 'range',       default: 0.045, min: 0.015, max: 0.15, step: 0.005, label: 'Stem Radius', group: 'Stem' },
+  lean:       { type: 'range',       default: 0.1,   min: 0,     max: 0.4,  step: 0.02,  label: 'Lean', group: 'Stem' },
+  capRadius:  { type: 'range',       default: 0.16,  min: 0.05,  max: 0.5,  step: 0.01,  label: 'Cap Radius', group: 'Cap' },
+  capSquash:  { type: 'range',       default: 0.6,   min: 0.25,  max: 1.2,  step: 0.05,  label: 'Cap Squash', group: 'Cap' },
+  capCurl:    { type: 'range',       default: 0.35,  min: 0,     max: 0.8,  step: 0.05,  label: 'Cap Curl', group: 'Cap' },
+  capNoise:   { type: 'range',       default: 0.12,  min: 0,     max: 0.5,  step: 0.02,  label: 'Cap Lumpiness', group: 'Cap' },
+  count:      { type: 'integer',     default: 1,     min: 1,     max: 9,    label: 'Cluster', group: 'Cluster' },
+  spread:     { type: 'range',       default: 1.0,   min: 0.4,   max: 2,    step: 0.05,  label: 'Spread', group: 'Cluster' },
+  spots:      { type: 'integer',     default: 0,     min: 0,     max: 20,   label: 'Spots', group: 'Cap' },
+  spotColor:  { type: 'color',       default: '#f2efe6', label: 'Spot Color', group: 'Colors' },
+  capColors:  { type: 'color-array', default: ['#9c6b3f', '#a87844', '#8a5a32'], min: 1, max: 6, label: 'Cap Colors', group: 'Colors' },
+  gillColor:  { type: 'color',       default: '#e8dcc2', label: 'Gill Color', group: 'Colors' },
+  stemColors: { type: 'color-array', default: ['#ddd2bc', '#cfc4ae'], min: 1, max: 4, label: 'Stem Colors', group: 'Colors' },
 } satisfies OptionSchema
 
 export type MushroomOptions = Partial<OptionInput<typeof mushroomSchema>> & { preset?: string }

@@ -5,17 +5,17 @@ import type { Vec3 } from '../../../core/types'
 import type { OptionSchema, OptionInput } from '../../../core/schema'
 
 export const fernSchema = {
-  seed:          { type: 'integer',     default: 1,    min: 1,    max: 100,  label: 'Seed' },
-  fronds:        { type: 'integer',     default: 6,    min: 2,    max: 12,   label: 'Fronds' },
-  length:        { type: 'range',       default: 1.0,  min: 0.4,  max: 2.2,  step: 0.05, label: 'Frond Length' },
-  arch:          { type: 'range',       default: 0.6,  min: 0.1,  max: 1.4,  step: 0.05, label: 'Arch' },
-  leaflets:      { type: 'integer',     default: 14,   min: 5,    max: 28,   label: 'Leaflets / side' },
-  leafletLength: { type: 'range',       default: 0.32, min: 0.1,  max: 0.6,  step: 0.02, label: 'Leaflet Length' },
-  leafletAngle:  { type: 'range',       default: 0.55, min: 0,    max: 1,    step: 0.05, label: 'Leaflet Forward' },
-  leafletDroop:  { type: 'range',       default: 0.3,  min: 0,    max: 1,    step: 0.05, label: 'Leaflet Droop' },
-  rachisWidth:   { type: 'range',       default: 0.02, min: 0.005,max: 0.05, step: 0.005, label: 'Rachis Width' },
-  segments:      { type: 'integer',     default: 12,   min: 6,    max: 20,   label: 'Rachis Smoothness' },
-  colors:        { type: 'color-array', default: ['#1f5216', '#2f6e1f', '#4e9a2e'], min: 1, max: 6, label: 'Colors' },
+  seed:          { type: 'integer',     default: 1,    min: 1,    max: 100,  label: 'Seed', group: 'General' },
+  fronds:        { type: 'integer',     default: 6,    min: 2,    max: 12,   label: 'Fronds', group: 'Fronds' },
+  length:        { type: 'range',       default: 1.0,  min: 0.4,  max: 2.2,  step: 0.05, label: 'Frond Length', group: 'Fronds' },
+  arch:          { type: 'range',       default: 0.6,  min: 0.1,  max: 1.4,  step: 0.05, label: 'Arch', group: 'Fronds' },
+  leaflets:      { type: 'integer',     default: 14,   min: 5,    max: 28,   label: 'Leaflets / side', group: 'Leaflets' },
+  leafletLength: { type: 'range',       default: 0.32, min: 0.1,  max: 0.6,  step: 0.02, label: 'Leaflet Length', group: 'Leaflets' },
+  leafletAngle:  { type: 'range',       default: 0.55, min: 0,    max: 1,    step: 0.05, label: 'Leaflet Forward', group: 'Leaflets' },
+  leafletDroop:  { type: 'range',       default: 0.3,  min: 0,    max: 1,    step: 0.05, label: 'Leaflet Droop', group: 'Leaflets' },
+  rachisWidth:   { type: 'range',       default: 0.02, min: 0.005,max: 0.05, step: 0.005, label: 'Rachis Width', group: 'Fronds' },
+  segments:      { type: 'integer',     default: 12,   min: 6,    max: 20,   label: 'Rachis Smoothness', group: 'Fronds' },
+  colors:        { type: 'color-array', default: ['#1f5216', '#2f6e1f', '#4e9a2e'], min: 1, max: 6, label: 'Colors', group: 'Colors' },
 } satisfies OptionSchema
 
 export type FernOptions = Partial<OptionInput<typeof fernSchema>> & { preset?: string }

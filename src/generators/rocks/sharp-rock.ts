@@ -7,19 +7,19 @@ import type { Mesh } from '../../core/mesh'
 import type { OptionSchema, OptionInput } from '../../core/schema'
 
 export const sharpRockSchema = {
-  seed:       { type: 'integer',     default: 1,    min: 1,   max: 100,  label: 'Seed' },
-  size:       { type: 'range',       default: 1.0,  min: 0.3, max: 3,    step: 0.05,  label: 'Size' },
-  shards:     { type: 'integer',     default: 5,    min: 1,   max: 12,   label: 'Shards' },
-  width:      { type: 'range',       default: 0.3,  min: 0.1, max: 0.6,  step: 0.05,  label: 'Shard Width' },
-  spread:     { type: 'range',       default: 0.45, min: 0,   max: 1,    step: 0.05,  label: 'Spread' },
-  tilt:       { type: 'range',       default: 22,   min: 0,   max: 50,   step: 1,     label: 'Tilt (°)' },
-  jitter:     { type: 'range',       default: 0.05, min: 0,   max: 0.15, step: 0.005, label: 'Jitter' },
-  mossColors: { type: 'color-array', default: [],   min: 0,   max: 4,    label: 'Moss Colors' },
-  mossAngle:  { type: 'range',       default: 35,   min: 0,   max: 80,   step: 5,     label: 'Moss Min Angle (°)' },
-  snowColors: { type: 'color-array', default: [],   min: 0,   max: 6,    label: 'Snow Colors' },
-  snowAngle:  { type: 'range',       default: 10,   min: 0,   max: 80,   step: 5,     label: 'Snow Min Angle (°)' },
-  snowDepth:  { type: 'range',       default: 0,    min: 0,   max: 0.3,  step: 0.01,  label: 'Snow Depth' },
-  colors:     { type: 'color-array', default: ['#5b5650', '#6e6862', '#7d766c'], min: 1, max: 6, label: 'Rock Colors' },
+  seed:       { type: 'integer',     default: 1,    min: 1,   max: 100,  label: 'Seed', group: 'General' },
+  size:       { type: 'range',       default: 1.0,  min: 0.3, max: 3,    step: 0.05,  label: 'Size', group: 'Shape' },
+  shards:     { type: 'integer',     default: 5,    min: 1,   max: 12,   label: 'Shards', group: 'Shape' },
+  width:      { type: 'range',       default: 0.3,  min: 0.1, max: 0.6,  step: 0.05,  label: 'Shard Width', group: 'Shape' },
+  spread:     { type: 'range',       default: 0.45, min: 0,   max: 1,    step: 0.05,  label: 'Spread', group: 'Shape' },
+  tilt:       { type: 'range',       default: 22,   min: 0,   max: 50,   step: 1,     label: 'Tilt (°)', group: 'Shape' },
+  jitter:     { type: 'range',       default: 0.05, min: 0,   max: 0.15, step: 0.005, label: 'Jitter', group: 'General' },
+  mossColors: { type: 'color-array', default: [],   min: 0,   max: 4,    label: 'Moss Colors', group: 'Moss' },
+  mossAngle:  { type: 'range',       default: 35,   min: 0,   max: 80,   step: 5,     label: 'Moss Min Angle (°)', group: 'Moss' },
+  snowColors: { type: 'color-array', default: [],   min: 0,   max: 6,    label: 'Snow Colors', group: 'Snow' },
+  snowAngle:  { type: 'range',       default: 10,   min: 0,   max: 80,   step: 5,     label: 'Snow Min Angle (°)', group: 'Snow' },
+  snowDepth:  { type: 'range',       default: 0,    min: 0,   max: 0.3,  step: 0.01,  label: 'Snow Depth', group: 'Snow' },
+  colors:     { type: 'color-array', default: ['#5b5650', '#6e6862', '#7d766c'], min: 1, max: 6, label: 'Rock Colors', group: 'Colors' },
 } satisfies OptionSchema
 
 export type SharpRockOptions = Partial<OptionInput<typeof sharpRockSchema>> & { preset?: string }

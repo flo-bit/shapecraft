@@ -1,2 +1,2 @@
-export { toThreeMesh, toThreeGeometry } from './to-three'
+export { toThreeMesh, toThreeGeometry, toThree, toThreeMaterial, type ToThreeOptions } from './to-three'
 export { fromThreeGeometry } from './from-three'

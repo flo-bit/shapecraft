@@ -5,6 +5,8 @@ export interface RangeOption {
   max: number
   step?: number
   label?: string
+  /** Optional UI grouping (e.g. 'Trunk', 'Canopy'); ungrouped params land in 'General' */
+  group?: string
 }
 
 export interface IntegerOption {
@@ -13,12 +15,16 @@ export interface IntegerOption {
   min: number
   max: number
   label?: string
+  /** Optional UI grouping (e.g. 'Trunk', 'Canopy'); ungrouped params land in 'General' */
+  group?: string
 }
 
 export interface ColorOption {
   type: 'color'
   default: string
   label?: string
+  /** Optional UI grouping (e.g. 'Trunk', 'Canopy'); ungrouped params land in 'General' */
+  group?: string
 }
 
 export interface ColorArrayOption {
@@ -27,12 +33,16 @@ export interface ColorArrayOption {
   min?: number
   max?: number
   label?: string
+  /** Optional UI grouping (e.g. 'Trunk', 'Canopy'); ungrouped params land in 'General' */
+  group?: string
 }
 
 export interface BooleanOption {
   type: 'boolean'
   default: boolean
   label?: string
+  /** Optional UI grouping (e.g. 'Trunk', 'Canopy'); ungrouped params land in 'General' */
+  group?: string
 }
 
 export interface SelectOption {
@@ -40,6 +50,8 @@ export interface SelectOption {
   default: string
   options: string[]
   label?: string
+  /** Optional UI grouping (e.g. 'Trunk', 'Canopy'); ungrouped params land in 'General' */
+  group?: string
 }
 
 export type OptionDef = RangeOption | IntegerOption | ColorOption | ColorArrayOption | BooleanOption | SelectOption

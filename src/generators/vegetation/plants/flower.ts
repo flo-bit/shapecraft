@@ -6,20 +6,20 @@ import type { Vec3 } from '../../../core/types'
 import type { OptionSchema, OptionInput } from '../../../core/schema'
 
 export const flowerSchema = {
-  seed:        { type: 'integer',     default: 1,    min: 1,    max: 100,  label: 'Seed' },
-  height:      { type: 'range',       default: 0.5,  min: 0.15, max: 1.2,  step: 0.05, label: 'Stem Height' },
-  stemRadius:  { type: 'range',       default: 0.012,min: 0.004,max: 0.03, step: 0.002, label: 'Stem Radius' },
-  lean:        { type: 'range',       default: 0.12, min: 0,    max: 0.4,  step: 0.02, label: 'Lean' },
-  petals:      { type: 'integer',     default: 9,    min: 3,    max: 18,   label: 'Petals' },
-  petalLength: { type: 'range',       default: 0.13, min: 0.05, max: 0.3,  step: 0.01, label: 'Petal Length' },
-  petalWidth:  { type: 'range',       default: 0.06, min: 0.02, max: 0.14, step: 0.005, label: 'Petal Width' },
-  petalLift:   { type: 'range',       default: 0.45, min: 0,    max: 1.2,  step: 0.05, label: 'Petal Lift' },
-  centerSize:  { type: 'range',       default: 0.045,min: 0.02, max: 0.1,  step: 0.005, label: 'Center Size' },
-  leaves:      { type: 'integer',     default: 2,    min: 0,    max: 4,    label: 'Leaves' },
-  leafLength:  { type: 'range',       default: 0.16, min: 0.05, max: 0.35, step: 0.01, label: 'Leaf Length' },
-  petalColor:  { type: 'color',       default: '#e0556b', label: 'Petal Color' },
-  centerColor: { type: 'color',       default: '#f0c040', label: 'Center Color' },
-  stemColors:  { type: 'color-array', default: ['#2f6a1e', '#3f8526'], min: 1, max: 4, label: 'Stem Colors' },
+  seed:        { type: 'integer',     default: 1,    min: 1,    max: 100,  label: 'Seed', group: 'General' },
+  height:      { type: 'range',       default: 0.5,  min: 0.15, max: 1.2,  step: 0.05, label: 'Stem Height', group: 'Stem' },
+  stemRadius:  { type: 'range',       default: 0.012,min: 0.004,max: 0.03, step: 0.002, label: 'Stem Radius', group: 'Stem' },
+  lean:        { type: 'range',       default: 0.12, min: 0,    max: 0.4,  step: 0.02, label: 'Lean', group: 'Stem' },
+  petals:      { type: 'integer',     default: 9,    min: 3,    max: 18,   label: 'Petals', group: 'Petals' },
+  petalLength: { type: 'range',       default: 0.13, min: 0.05, max: 0.3,  step: 0.01, label: 'Petal Length', group: 'Petals' },
+  petalWidth:  { type: 'range',       default: 0.06, min: 0.02, max: 0.14, step: 0.005, label: 'Petal Width', group: 'Petals' },
+  petalLift:   { type: 'range',       default: 0.45, min: 0,    max: 1.2,  step: 0.05, label: 'Petal Lift', group: 'Petals' },
+  centerSize:  { type: 'range',       default: 0.045,min: 0.02, max: 0.1,  step: 0.005, label: 'Center Size', group: 'Petals' },
+  leaves:      { type: 'integer',     default: 2,    min: 0,    max: 4,    label: 'Leaves', group: 'Leaves' },
+  leafLength:  { type: 'range',       default: 0.16, min: 0.05, max: 0.35, step: 0.01, label: 'Leaf Length', group: 'Leaves' },
+  petalColor:  { type: 'color',       default: '#e0556b', label: 'Petal Color', group: 'Colors' },
+  centerColor: { type: 'color',       default: '#f0c040', label: 'Center Color', group: 'Colors' },
+  stemColors:  { type: 'color-array', default: ['#2f6a1e', '#3f8526'], min: 1, max: 4, label: 'Stem Colors', group: 'Colors' },
 } satisfies OptionSchema
 
 export type FlowerOptions = Partial<OptionInput<typeof flowerSchema>> & { preset?: string }

@@ -7,22 +7,22 @@ import type { Mesh } from '../../core/mesh'
 import type { OptionSchema, OptionInput } from '../../core/schema'
 
 export const blockRockSchema = {
-  seed:         { type: 'integer',     default: 1,    min: 1,   max: 100,  label: 'Seed' },
-  size:         { type: 'range',       default: 0.7,  min: 0.2, max: 2.5,  step: 0.05,  label: 'Size' },
-  blocks:       { type: 'integer',     default: 3,    min: 1,   max: 10,   label: 'Blocks' },
-  aspect:       { type: 'range',       default: 1.0,  min: 0.4, max: 2.5,  step: 0.05,  label: 'Aspect (Height)' },
-  irregularity: { type: 'range',       default: 0.45, min: 0,   max: 0.8,  step: 0.05,  label: 'Irregularity' },
-  spread:       { type: 'range',       default: 0.7,  min: 0.3, max: 1.2,  step: 0.05,  label: 'Spread' },
-  tilt:         { type: 'range',       default: 15,   min: 0,   max: 35,   step: 1,     label: 'Tilt (°)' },
-  noise:        { type: 'range',       default: 0.18, min: 0,   max: 0.5,  step: 0.02,  label: 'Lumpiness' },
-  jitter:       { type: 'range',       default: 0.1,  min: 0,   max: 0.2,  step: 0.005, label: 'Jitter' },
-  sink:         { type: 'range',       default: 0.15, min: 0,   max: 0.5,  step: 0.05,  label: 'Sink' },
-  mossColors:   { type: 'color-array', default: [],   min: 0,   max: 4,    label: 'Moss Colors' },
-  mossAngle:    { type: 'range',       default: 40,   min: 0,   max: 80,   step: 5,     label: 'Moss Min Angle (°)' },
-  snowColors:   { type: 'color-array', default: [],   min: 0,   max: 6,    label: 'Snow Colors' },
-  snowAngle:    { type: 'range',       default: 35,   min: 0,   max: 80,   step: 5,     label: 'Snow Min Angle (°)' },
-  snowDepth:    { type: 'range',       default: 0,    min: 0,   max: 0.3,  step: 0.01,  label: 'Snow Depth' },
-  colors:       { type: 'color-array', default: ['#56514b', '#6a645c', '#7e776d'], min: 1, max: 6, label: 'Rock Colors' },
+  seed:         { type: 'integer',     default: 1,    min: 1,   max: 100,  label: 'Seed', group: 'General' },
+  size:         { type: 'range',       default: 0.7,  min: 0.2, max: 2.5,  step: 0.05,  label: 'Size', group: 'Shape' },
+  blocks:       { type: 'integer',     default: 3,    min: 1,   max: 10,   label: 'Blocks', group: 'Shape' },
+  aspect:       { type: 'range',       default: 1.0,  min: 0.4, max: 2.5,  step: 0.05,  label: 'Aspect (Height)', group: 'Shape' },
+  irregularity: { type: 'range',       default: 0.45, min: 0,   max: 0.8,  step: 0.05,  label: 'Irregularity', group: 'Shape' },
+  spread:       { type: 'range',       default: 0.7,  min: 0.3, max: 1.2,  step: 0.05,  label: 'Spread', group: 'Shape' },
+  tilt:         { type: 'range',       default: 15,   min: 0,   max: 35,   step: 1,     label: 'Tilt (°)', group: 'Shape' },
+  noise:        { type: 'range',       default: 0.18, min: 0,   max: 0.5,  step: 0.02,  label: 'Lumpiness', group: 'Shape' },
+  jitter:       { type: 'range',       default: 0.1,  min: 0,   max: 0.2,  step: 0.005, label: 'Jitter', group: 'General' },
+  sink:         { type: 'range',       default: 0.15, min: 0,   max: 0.5,  step: 0.05,  label: 'Sink', group: 'Shape' },
+  mossColors:   { type: 'color-array', default: [],   min: 0,   max: 4,    label: 'Moss Colors', group: 'Moss' },
+  mossAngle:    { type: 'range',       default: 40,   min: 0,   max: 80,   step: 5,     label: 'Moss Min Angle (°)', group: 'Moss' },
+  snowColors:   { type: 'color-array', default: [],   min: 0,   max: 6,    label: 'Snow Colors', group: 'Snow' },
+  snowAngle:    { type: 'range',       default: 35,   min: 0,   max: 80,   step: 5,     label: 'Snow Min Angle (°)', group: 'Snow' },
+  snowDepth:    { type: 'range',       default: 0,    min: 0,   max: 0.3,  step: 0.01,  label: 'Snow Depth', group: 'Snow' },
+  colors:       { type: 'color-array', default: ['#56514b', '#6a645c', '#7e776d'], min: 1, max: 6, label: 'Rock Colors', group: 'Colors' },
 } satisfies OptionSchema
 
 export type BlockRockOptions = Partial<OptionInput<typeof blockRockSchema>> & { preset?: string }
