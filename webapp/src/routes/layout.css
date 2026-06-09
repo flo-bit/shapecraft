@@ -1,3 +1,40 @@
 @import 'tailwindcss';
 @plugin '@tailwindcss/forms';
 @plugin '@tailwindcss/typography';
+
+/* Atelier (dirA) design tokens */
+@theme {
+	--color-bg: #0d0e11;
+	--color-panel: #14161b;
+	--color-panel2: #191c22;
+	--color-line: #242830;
+	--color-line2: #2f343d;
+	--color-ink: #e9eaed;
+	--color-muted: #969ba5;
+	--color-faint: #666c76;
+	--color-accent: #a6e86a;
+	--color-accent2: #3c5526;
+	--color-accent-ink: #16270a;
+
+	--font-sans: 'Hanken Grotesk', system-ui, sans-serif;
+	--font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+html,
+body {
+	height: 100%;
+}
+
+body {
+	background: var(--color-bg);
+	color: var(--color-ink);
+	font-family: var(--font-sans);
+	font-size: 14px;
+	-webkit-font-smoothing: antialiased;
+	overflow: hidden;
+}
+
+.mono {
+	font-family: var(--font-mono);
+	font-feature-settings: 'tnum';
+}

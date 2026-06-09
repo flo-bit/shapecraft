@@ -17,6 +17,7 @@ import {
   rock, rockSchema, rockPresets,
   sharpRock, sharpRockSchema, sharpRockPresets,
   blockRock, blockRockSchema, blockRockPresets,
+  mushroom, mushroomSchema, mushroomPresets,
 } from '../src/generators'
 import { createEditor } from './editor/editor'
 import type { OptionSchema } from '../src/core/schema'
@@ -44,6 +45,7 @@ const GENERATORS: Record<string, GenEntry> = {
   rock:   { label: 'Rock',   gen: rock, schema: rockSchema, presets: rockPresets, sizeKey: 'size', defaultSize: 0.6 },
   sharp:  { label: 'Sharp',  gen: sharpRock, schema: sharpRockSchema, presets: sharpRockPresets, sizeKey: 'size', defaultSize: 1.0 },
   block:  { label: 'Blocks', gen: blockRock, schema: blockRockSchema, presets: blockRockPresets, sizeKey: 'size', defaultSize: 0.7 },
+  mushroom: { label: 'Mushroom', gen: mushroom, schema: mushroomSchema, presets: mushroomPresets, sizeKey: 'height', defaultSize: 0.35 },
 }
 
 // --- Renderer ---

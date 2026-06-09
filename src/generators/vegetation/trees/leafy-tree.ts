@@ -1,4 +1,4 @@
-import { merge, snow as applySnow } from '../../../ops'
+import { merge, snow as applySnow, decimate } from '../../../ops'
 import { setup, branches, foliageBlob, facetShade, heightShade, metaballs, type MetaBall } from '../../../build'
 import { pickRandom } from '../../../color'
 import { UberNoise } from '../../../noise'
@@ -17,6 +17,7 @@ export const leafyTreeSchema = {
   taper:        { type: 'range',       default: 0.5,  min: 0.3,  max: 1.2,  step: 0.05, label: 'Taper' },
   leafSize:     { type: 'range',       default: 0.55, min: 0.2,  max: 1.2,  step: 0.05, label: 'Leaf Cluster Size' },
   blobCanopy:   { type: 'boolean',     default: false, label: 'Merge Canopy' },
+  blobDetail:   { type: 'range',       default: 0.4,  min: 0.1,  max: 1,    step: 0.05, label: 'Canopy Detail' },
   canopyNoise:  { type: 'range',       default: 0.5,  min: 0,    max: 1.2,  step: 0.05, label: 'Canopy Noise' },
   jitter:       { type: 'range',       default: 0.05, min: 0,    max: 0.15, step: 0.005, label: 'Jitter' },
   snowColors:   { type: 'color-array', default: [],   min: 0,    max: 6,    label: 'Snow Colors' },
@@ -91,8 +92,10 @@ export function leafyTree(options: LeafyTreeOptions = {}): Mesh {
       center: tip.position,
       radius: o.leafSize * (0.7 + leafRng() * 0.6),
     }))
+    let canopy = metaballs(balls, { resolution: 28, isolevel: 0.5, support: 2.0 })
+    if (o.blobDetail < 1) canopy = decimate(canopy, { ratio: o.blobDetail })
     parts.push(
-      metaballs(balls, { resolution: 26, isolevel: 0.5, support: 2.0 })
+      canopy
         .jitter(o.leafSize * o.jitter, { seed: leafRng.seed() })
         .faceColor(shadeFor(pickRandom(o.leafColors, colorRng))),
     )

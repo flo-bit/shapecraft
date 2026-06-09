@@ -6,8 +6,8 @@ export type { Vec2, Vec3, Vec4, ColorInput, ColorFn, DisplaceFn, WarpFn, NoiseLi
 export { box, sphere, cylinder, plane, cone, torus, icosphere } from './primitives'
 
 // Operations
-export { merge, center, clone, loft, tube, thicken, snow } from './ops'
-export type { SnowOptions } from './ops'
+export { merge, center, clone, loft, tube, thicken, snow, decimate } from './ops'
+export type { SnowOptions, DecimateOptions } from './ops'
 
 // Modifiers
 export { twist, bend, taper } from './modifiers'
@@ -46,3 +46,4 @@ export { leafyTree, leafyTreeSchema, leafyTreePresets } from './generators'
 export { rock, rockSchema, rockPresets } from './generators'
 export { sharpRock, sharpRockSchema, sharpRockPresets } from './generators'
 export { blockRock, blockRockSchema, blockRockPresets } from './generators'
+export { mushroom, mushroomSchema, mushroomPresets } from './generators'

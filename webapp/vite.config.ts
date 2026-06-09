@@ -14,12 +14,24 @@ export default defineConfig({
 					filename.split(/[/\\]/).includes('node_modules') ? undefined : true
 			},
 
+			// Consume the shapecraft library as TS source so generator edits hot-reload in the viewport.
+			alias: {
+				shapecraft: '../src',
+				'shapecraft/*': '../src/*'
+			},
+
 			// adapter-auto only supports some environments, see https://svelte.dev/docs/kit/adapter-auto for a list.
 			// If your environment is not supported, or you settled on a specific environment, switch out the adapter.
 			// See https://svelte.dev/docs/kit/adapters for more information about adapters.
 			adapter: adapter()
 		})
 	],
+	server: {
+		fs: {
+			// Allow serving shapecraft source from one level up
+			allow: ['..']
+		}
+	},
 	test: {
 		expect: { requireAssertions: true },
 		projects: [
