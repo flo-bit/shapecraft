@@ -1,5 +1,5 @@
 import { cylinder, cone } from '../primitives'
-import { merge } from '../ops'
+import { merge, snow as applySnow } from '../ops'
 import { createRng } from '../core/rng'
 import { resolveOptions } from '../core/schema'
 import { paletteGradient, pickRandom } from '../color'
@@ -31,6 +31,7 @@ export const pineSchema = {
   colorNoiseScale:{ type: 'range',       default: 1.5,  min: 0.3,  max: 5,    step: 0.1,  label: 'Color Noise Scale' },
   snowColors:     { type: 'color-array', default: [], min: 0, max: 6, label: 'Snow Colors' },
   snowAngle:      { type: 'range',       default: 20,   min: 0,    max: 80,   step: 5,    label: 'Snow Min Angle (°)' },
+  snowDepth:      { type: 'range',       default: 0,    min: 0,    max: 0.3,  step: 0.01, label: 'Snow Depth' },
   trunkColors:    { type: 'color-array', default: ['#1a0f06', '#3d2210', '#4a2a15'], min: 2, max: 6, label: 'Trunk Colors' },
   canopyColors:   { type: 'color-array', default: ['#0a2e12', '#0e3a18', '#144a22', '#1a5a2c'], min: 1, max: 8, label: 'Canopy Colors' },
 } satisfies OptionSchema
@@ -109,6 +110,7 @@ export function pine(options: PineOptions = {}): Mesh {
   const canopyGrad = paletteGradient(o.canopyColors)
   const colorNoise = new UberNoise({ seed: colorRng.seed(), scale: o.colorNoiseScale })
   const hasSnow = o.snowColors.length > 0
+  const useGeoSnow = hasSnow && o.snowDepth > 0
   const snowNoise = hasSnow ? new UberNoise({ seed: snowRng.seed(), scale: 2 }) : null
   const snowThreshold = Math.sin(o.snowAngle * Math.PI / 180)
 
@@ -159,7 +161,7 @@ export function pine(options: PineOptions = {}): Mesh {
 
     // Face color
     const base = canopyGrad(t)
-    const snow = hasSnow ? pickRandom(o.snowColors, snowRng) : null
+    const snow = (hasSnow && !useGeoSnow) ? pickRandom(o.snowColors, snowRng) : null
 
     layer = layer.faceColor((centroid, normal) => {
       if (snow && snowNoise) {
@@ -182,7 +184,7 @@ export function pine(options: PineOptions = {}): Mesh {
   const swayNoiseX = new UberNoise({ seed: swayRng.seed(), scale: o.swayScale })
   const swayNoiseZ = new UberNoise({ seed: swayRng.seed(), scale: o.swayScale })
 
-  return merge(trunk, ...canopyParts)
+  const result = merge(trunk, ...canopyParts)
     .warp((pos) => {
       const t = pos[1] / o.height
       const sway = t * t * o.swayAmount
@@ -192,4 +194,13 @@ export function pine(options: PineOptions = {}): Mesh {
         pos[2] + swayNoiseZ.get(0, pos[1]) * sway,
       ]
     })
+
+  if (!useGeoSnow) return result
+
+  return applySnow(result, {
+    depth: o.snowDepth,
+    minAngle: 90 - o.snowAngle,
+    color: pickRandom(o.snowColors, snowRng),
+    seed: snowRng.seed(),
+  })
 }

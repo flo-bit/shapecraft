@@ -1,5 +1,5 @@
 import { icosphere, cylinder } from '../primitives'
-import { merge } from '../ops'
+import { merge, snow as applySnow } from '../ops'
 import { createRng } from '../core/rng'
 import { scatterOnSphere } from '../core/scatter'
 import { resolveOptions } from '../core/schema'
@@ -27,6 +27,7 @@ export const treeSchema = {
   jitter:         { type: 'range',       default: 0.04, min: 0,    max: 0.15, step: 0.005, label: 'Jitter' },
   snowColors:     { type: 'color-array', default: [], min: 0, max: 6, label: 'Snow Colors' },
   snowAngle:      { type: 'range',       default: 30, min: 0, max: 80, step: 5, label: 'Snow Min Angle (°)' },
+  snowDepth:      { type: 'range',       default: 0,  min: 0, max: 0.3, step: 0.01, label: 'Snow Depth' },
   trunkColors:    { type: 'color-array', default: ['#1a0f06', '#4a2815', '#5a3520'], min: 2, max: 6, label: 'Trunk Colors' },
   canopyColors:   { type: 'color-array', default: ['#1e6b10', '#2a7518', '#238020', '#2d8a1e'], min: 1, max: 8, label: 'Canopy Colors' },
 } satisfies OptionSchema
@@ -137,6 +138,9 @@ export function tree(options: TreeOptions = {}): Mesh {
   const colorNoise = new UberNoise({ seed: colorNoiseSeed, scale: 1.5 })
 
   const hasSnow = o.snowColors.length > 0
+  // When snowDepth > 0 we build a real snow layer (geometry) at the end instead of
+  // painting snow onto faces. Depth 0 keeps the cheap painted-snow path.
+  const useGeoSnow = hasSnow && o.snowDepth > 0
   const snowNoise = hasSnow ? new UberNoise({ seed: snowRng.seed(), scale: 2 }) : null
   const snowThreshold = Math.sin(o.snowAngle * Math.PI / 180)
 
@@ -144,7 +148,7 @@ export function tree(options: TreeOptions = {}): Mesh {
     // Pick colors upfront so we don't draw inside the per-face loop. Each draw comes
     // from its own stream, so snow being on/off never shifts the base canopy color.
     const base = pickRandom(o.canopyColors, colorRng)
-    const snow = hasSnow ? pickRandom(o.snowColors, snowRng) : null
+    const snow = (hasSnow && !useGeoSnow) ? pickRandom(o.snowColors, snowRng) : null
     return (centroid, normal) => {
       const top = normal[1] * 0.5 + 0.5
 
@@ -190,5 +194,13 @@ export function tree(options: TreeOptions = {}): Mesh {
     }
   }
 
-  return merge(trunk, ...canopyParts)
+  const result = merge(trunk, ...canopyParts)
+  if (!useGeoSnow) return result
+
+  return applySnow(result, {
+    depth: o.snowDepth,
+    minAngle: 90 - o.snowAngle,
+    color: pickRandom(o.snowColors, snowRng),
+    seed: snowRng.seed(),
+  })
 }

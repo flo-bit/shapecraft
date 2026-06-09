@@ -52,7 +52,7 @@ describe.each(generators)('$name generator', ({ name, gen }) => {
 describe('stream independence at the model level', () => {
   // The headline benefit of named streams: a feature that only affects color (snow)
   // must not perturb geometry, because positions come from independent streams.
-  it.each(generators)('$name: toggling snow leaves geometry byte-identical', ({ gen }) => {
+  it.each(generators)('$name: painted snow (depth 0) leaves geometry byte-identical', ({ gen }) => {
     const bare = gen({ seed: 3, snowColors: [] })
     const snowy = gen({ seed: 3, snowColors: ['#ffffff', '#eeeeee'] })
 
@@ -60,5 +60,22 @@ describe('stream independence at the model level', () => {
     expect(Array.from(snowy.positions)).toEqual(Array.from(bare.positions))
     // ...but different coloring.
     expect(Array.from(snowy.colors!)).not.toEqual(Array.from(bare.colors!))
+  })
+})
+
+describe('geometric snow (snowDepth > 0)', () => {
+  it.each(generators)('$name: adds a snow layer of real geometry', ({ gen }) => {
+    const bare = gen({ seed: 4, snowColors: [] })
+    const snowy = gen({ seed: 4, snowColors: ['#eef0f5'], snowDepth: 0.08 })
+    // The snow shell adds vertices on top of the model.
+    expect(snowy.vertexCount).toBeGreaterThan(bare.vertexCount)
+    // And reaches higher than the bare model (snow sits on top).
+    expect(snowy.boundingBox.max.y).toBeGreaterThan(bare.boundingBox.max.y)
+  })
+
+  it.each(generators)('$name: geometric snow is deterministic', ({ gen }) => {
+    const a = gen({ seed: 4, snowColors: ['#eef0f5'], snowDepth: 0.08 }).positions
+    const b = gen({ seed: 4, snowColors: ['#eef0f5'], snowDepth: 0.08 }).positions
+    expect(Array.from(a)).toEqual(Array.from(b))
   })
 })

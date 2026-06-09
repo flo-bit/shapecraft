@@ -1,5 +1,5 @@
 import { sphere } from '../primitives'
-import { merge, tube, loft, thicken } from '../ops'
+import { merge, tube, loft, thicken, snow as applySnow } from '../ops'
 import { createRng } from '../core/rng'
 import { resolveOptions } from '../core/schema'
 import { paletteGradient, pickRandom } from '../color'
@@ -28,6 +28,7 @@ export const palmSchema = {
   jitter:          { type: 'range',       default: 0.02, min: 0,    max: 0.08, step: 0.005, label: 'Jitter' },
   snowColors:      { type: 'color-array', default: [], min: 0, max: 6, label: 'Snow Colors' },
   snowAngle:       { type: 'range',       default: 20,   min: 0,    max: 80,   step: 5,    label: 'Snow Min Angle (°)' },
+  snowDepth:       { type: 'range',       default: 0,    min: 0,    max: 0.3,  step: 0.01, label: 'Snow Depth' },
   trunkColors:     { type: 'color-array', default: ['#3a2a15', '#5a4025', '#6a5030'], min: 2, max: 6, label: 'Trunk Colors' },
   frondColors:     { type: 'color-array', default: ['#1a4a12', '#224e18', '#2a5520', '#1e4015'], min: 1, max: 8, label: 'Frond Colors' },
   coconutColor:    { type: 'color',       default: '#3a2810', label: 'Coconut Color' },
@@ -120,6 +121,7 @@ export function palm(options: PalmOptions = {}): Mesh {
 
   const colorNoise = new UberNoise({ seed: colorRng.seed(), scale: 1.5 })
   const hasSnow = o.snowColors.length > 0
+  const useGeoSnow = hasSnow && o.snowDepth > 0
   const snowNoise = hasSnow ? new UberNoise({ seed: snowRng.seed(), scale: 2 }) : null
   const snowThreshold = Math.sin(o.snowAngle * Math.PI / 180)
 
@@ -179,7 +181,7 @@ export function palm(options: PalmOptions = {}): Mesh {
 
     // Color
     const base = frondGrad(i / frondCount)
-    const snow = hasSnow ? pickRandom(o.snowColors, snowRng) : null
+    const snow = (hasSnow && !useGeoSnow) ? pickRandom(o.snowColors, snowRng) : null
 
     const colored = frondMesh.faceColor((centroid, normal) => {
       if (snow && snowNoise) {
@@ -215,5 +217,13 @@ export function palm(options: PalmOptions = {}): Mesh {
     coconutParts.push(coconut)
   }
 
-  return merge(trunkMesh, ...frondParts, ...coconutParts)
+  const result = merge(trunkMesh, ...frondParts, ...coconutParts)
+  if (!useGeoSnow) return result
+
+  return applySnow(result, {
+    depth: o.snowDepth,
+    minAngle: 90 - o.snowAngle,
+    color: pickRandom(o.snowColors, snowRng),
+    seed: snowRng.seed(),
+  })
 }
