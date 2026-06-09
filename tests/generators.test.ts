@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { tree, pine, palm, bush, grass, fern } from '../src/generators'
+import { tree, pine, palm, bush, grass, fern, flower, deadTree, rock } from '../src/generators'
 import type { Mesh } from '../src/core/mesh'
 
 const generators = [
@@ -9,6 +9,9 @@ const generators = [
   { name: 'bush', gen: bush },
   { name: 'grass', gen: grass },
   { name: 'fern', gen: fern },
+  { name: 'flower', gen: flower },
+  { name: 'dead', gen: deadTree },
+  { name: 'rock', gen: rock },
 ] as const
 
 // Generators that support snow (trees + shrubs). Grass/ferns don't take snow options.
@@ -23,6 +26,9 @@ const golden: Record<string, { verts: number }> = {
   bush: { verts: 3600 },
   grass: { verts: 768 },
   fern: { verts: 6480 },
+  flower: { verts: 654 },
+  dead: { verts: 1400 },
+  rock: { verts: 1440 },
 }
 
 function allFinite(m: Mesh): boolean {

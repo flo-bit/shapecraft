@@ -99,7 +99,7 @@ export function loft(options: LoftOptions): Mesh {
  * Simple loft variant: sweep a radius along a path to make a tube/branch shape.
  * radiusFn maps t (0-1 along path) to radius at that point.
  */
-export function tube(path: Vec3[], radiusFn: number | ((t: number) => number), segments: number = 6): Mesh {
+export function tube(path: Vec3[], radiusFn: number | ((t: number) => number), segments: number = 6, caps: boolean = true): Mesh {
   const rFn = typeof radiusFn === 'number' ? () => radiusFn : radiusFn
 
   // Generate circle cross-sections at each path point
@@ -138,18 +138,20 @@ export function tube(path: Vec3[], radiusFn: number | ((t: number) => number), s
     }
   }
 
-  // Caps
-  const startCenter = positions.length / 3
-  positions.push(path[0][0], path[0][1], path[0][2])
-  for (let j = 0; j < segments; j++) {
-    indices.push(startCenter, (j + 1) % segments, j)
-  }
+  // Caps (optional — omit for branch junctions where the cap discs would z-fight)
+  if (caps) {
+    const startCenter = positions.length / 3
+    positions.push(path[0][0], path[0][1], path[0][2])
+    for (let j = 0; j < segments; j++) {
+      indices.push(startCenter, (j + 1) % segments, j)
+    }
 
-  const endCenter = positions.length / 3
-  positions.push(path[pathLen - 1][0], path[pathLen - 1][1], path[pathLen - 1][2])
-  const endOff = (pathLen - 1) * segments
-  for (let j = 0; j < segments; j++) {
-    indices.push(endCenter, endOff + j, endOff + (j + 1) % segments)
+    const endCenter = positions.length / 3
+    positions.push(path[pathLen - 1][0], path[pathLen - 1][1], path[pathLen - 1][2])
+    const endOff = (pathLen - 1) * segments
+    for (let j = 0; j < segments; j++) {
+      indices.push(endCenter, endOff + j, endOff + (j + 1) % segments)
+    }
   }
 
   const geo = new THREE.BufferGeometry()

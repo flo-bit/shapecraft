@@ -11,6 +11,9 @@ import {
   bush, bushSchema, bushPresets,
   grass, grassSchema, grassPresets,
   fern, fernSchema, fernPresets,
+  flower, flowerSchema, flowerPresets,
+  deadTree, deadTreeSchema, deadTreePresets,
+  rock, rockSchema, rockPresets,
 } from '../src/generators'
 import { createEditor } from './editor/editor'
 import type { OptionSchema } from '../src/core/schema'
@@ -32,6 +35,9 @@ const GENERATORS: Record<string, GenEntry> = {
   bush:   { label: 'Bush',   gen: bush, schema: bushSchema, presets: bushPresets, sizeKey: 'size',   defaultSize: 0.6 },
   grass:  { label: 'Grass',  gen: grass, schema: grassSchema, presets: grassPresets, sizeKey: 'height', defaultSize: 0.6 },
   fern:   { label: 'Fern',   gen: fern, schema: fernSchema, presets: fernPresets, sizeKey: 'length', defaultSize: 1.0 },
+  flower: { label: 'Flower', gen: flower, schema: flowerSchema, presets: flowerPresets, sizeKey: 'height', defaultSize: 0.5 },
+  dead:   { label: 'Dead',   gen: deadTree, schema: deadTreeSchema, presets: deadTreePresets, sizeKey: 'height', defaultSize: 1.5 },
+  rock:   { label: 'Rock',   gen: rock, schema: rockSchema, presets: rockPresets, sizeKey: 'size', defaultSize: 0.6 },
 }
 
 // --- Renderer ---

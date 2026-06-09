@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { setup, trunk, foliageBlob, facetShade, heightShade, scatterOnSurface, blade } from '../src/build'
+import { setup, trunk, foliageBlob, facetShade, heightShade, scatterOnSurface, blade, branches } from '../src/build'
 import { sphere, box, plane } from '../src/primitives'
 import type { OptionSchema } from '../src/core/schema'
 import type { Vec3 } from '../src/core/types'
@@ -129,6 +129,42 @@ describe('blade', () => {
   it('reaches the path extent', () => {
     const m = blade(path, { width: 0.1 })
     expect(m.boundingBox.max.y).toBeGreaterThan(1.0)
+  })
+})
+
+describe('branches', () => {
+  const opts = { seed: 1, length: 1, radius: 0.15, depth: 4, children: 2 as const }
+
+  it('produces a limb mesh and a tip per strand', () => {
+    const r = branches(opts)
+    expect(r.mesh.vertexCount).toBeGreaterThan(0)
+    // One tip per strand (every axis ends in a twig); 2 children over 4 levels → 1+2+4+8 = 15.
+    expect(r.tips.length).toBe(15)
+  })
+
+  it('tips carry a position, a unit direction, and a radius', () => {
+    const r = branches(opts)
+    for (const tip of r.tips) {
+      expect(Math.hypot(...tip.direction)).toBeCloseTo(1, 5)
+      expect(tip.radius).toBeGreaterThan(0)
+    }
+  })
+
+  it('grows upward from the base', () => {
+    const r = branches(opts)
+    expect(r.mesh.boundingBox.max.y).toBeGreaterThan(0.8)
+  })
+
+  it('is deterministic for the same seed', () => {
+    const a = branches(opts).mesh.positions
+    const b = branches(opts).mesh.positions
+    expect(Array.from(a)).toEqual(Array.from(b))
+  })
+
+  it('more depth → more limbs (more vertices)', () => {
+    const shallow = branches({ ...opts, depth: 2 }).mesh.vertexCount
+    const deep = branches({ ...opts, depth: 4 }).mesh.vertexCount
+    expect(deep).toBeGreaterThan(shallow)
   })
 })
 
