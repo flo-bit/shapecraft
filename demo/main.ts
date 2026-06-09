@@ -139,7 +139,6 @@ function rebuildTrees(opts: Record<string, any>) {
 
 // --- Editor with generator switcher ---
 let currentEditorEl: HTMLElement | null = null
-let lastOpts: Record<string, any> = {}
 
 function mountEditor(type: 'common' | 'pine' | 'palm' | 'bush') {
   activeGenerator = type
@@ -149,7 +148,7 @@ function mountEditor(type: 'common' | 'pine' | 'palm' | 'bush') {
   const presets = type === 'pine' ? pinePresets : type === 'palm' ? palmPresets : type === 'bush' ? bushPresets : treePresets
 
   currentEditorEl = createEditor(schema, {
-    onChange: (opts) => { lastOpts = opts; rebuildTrees(opts) },
+    onChange: (opts) => { rebuildTrees(opts) },
   }, { presets })
 
   // Add generator switcher at the top

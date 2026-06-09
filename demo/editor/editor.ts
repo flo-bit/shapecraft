@@ -31,7 +31,7 @@ export function createEditor(
   for (const [key, def] of Object.entries(schema)) {
     const d = def.default
     // For range/integer with [min,max] default, show midpoint in editor
-    if (Array.isArray(d) && d.length === 2 && typeof d[0] === 'number' && (def.type === 'range' || def.type === 'integer')) {
+    if (Array.isArray(d) && d.length === 2 && typeof d[0] === 'number' && typeof d[1] === 'number' && (def.type === 'range' || def.type === 'integer')) {
       values[key] = (d[0] + d[1]) / 2
     } else {
       values[key] = structuredClone(d)
@@ -78,7 +78,7 @@ export function createEditor(
       // Reset to schema defaults first (resolve [min,max] to midpoint for editor)
       for (const [key, def] of Object.entries(schema)) {
         const d = def.default
-        if (Array.isArray(d) && d.length === 2 && typeof d[0] === 'number' && (def.type === 'range' || def.type === 'integer')) {
+        if (Array.isArray(d) && d.length === 2 && typeof d[0] === 'number' && typeof d[1] === 'number' && (def.type === 'range' || def.type === 'integer')) {
           values[key] = def.type === 'integer' ? Math.round((d[0] + d[1]) / 2) : (d[0] + d[1]) / 2
         } else {
           values[key] = structuredClone(d)
@@ -216,6 +216,7 @@ function createControl(
     setter = (v) => { input.value = v }
     row.appendChild(input)
   } else if (def.type === 'color-array') {
+    const caDef = def // narrowed to ColorArrayOption; preserved into the closures below
     const wrap = document.createElement('div')
     wrap.style.cssText = 'display: flex; flex-wrap: wrap; gap: 4px;'
 
@@ -235,7 +236,7 @@ function createControl(
         })
         swatch.addEventListener('contextmenu', (e) => {
           e.preventDefault()
-          if (arr.length > (def.min ?? 1)) {
+          if (arr.length > (caDef.min ?? 1)) {
             arr.splice(idx, 1)
             rebuild()
             onChange()
@@ -244,7 +245,7 @@ function createControl(
         wrap.appendChild(swatch)
       }
 
-      if (!def.max || arr.length < def.max) {
+      if (!caDef.max || arr.length < caDef.max) {
         const add = document.createElement('button')
         add.textContent = '+'
         add.style.cssText = 'width: 24px; height: 24px; border: 1px dashed #555; background: none; color: #888; cursor: pointer; font-size: 14px;'

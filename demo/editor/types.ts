@@ -1,1 +1,1 @@
-export type { OptionDef, OptionSchema, OptionValues, RangeOption, IntegerOption, ColorOption, ColorArrayOption, BooleanOption, SelectOption } from '../../src/schema'
+export type { OptionDef, OptionSchema, OptionValues, RangeOption, IntegerOption, ColorOption, ColorArrayOption, BooleanOption, SelectOption } from '../../src/core/schema'

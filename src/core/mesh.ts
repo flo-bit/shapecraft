@@ -6,10 +6,6 @@ function cloneGeometry(geometry: THREE.BufferGeometry): THREE.BufferGeometry {
   return geometry.clone()
 }
 
-function fract(x: number): number {
-  return x - Math.floor(x)
-}
-
 export class Mesh {
   readonly geometry: THREE.BufferGeometry
 

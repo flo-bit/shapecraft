@@ -90,7 +90,6 @@ export function pine(options: PineOptions = {}): Mesh {
   // Canopy — stacked pyramid cones
   const canopyParts: Mesh[] = []
   const canopyStart = trunkHeight * 0.6
-  const canopyHeight = o.height - canopyStart
   const layerCount = o.layers
 
   // Per-layer jitter seeds from the canopy stream

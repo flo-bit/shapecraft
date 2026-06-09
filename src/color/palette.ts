@@ -1,4 +1,4 @@
-import { interpolate, formatRgb, parse, converter } from 'culori'
+import { interpolate, parse, converter } from 'culori'
 import type { ColorInput, ColorFn, Vec3 } from '../core/types'
 import type { NoiseLike } from '../core/types'
 
