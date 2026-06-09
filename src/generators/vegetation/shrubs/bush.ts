@@ -3,6 +3,8 @@ import { merge, snow as applySnow } from '../../../ops'
 import { setup, foliageBlob, facetShade, scatterOnSurface } from '../../../build'
 import { pickRandom } from '../../../color'
 import { UberNoise } from '../../../noise'
+import { group, part, Asset } from '../../../core/asset'
+import { VERTEX_COLOR_MATERIAL } from '../../../core/material'
 import type { Mesh } from '../../../core/mesh'
 import type { OptionSchema, OptionInput } from '../../../core/schema'
 
@@ -58,7 +60,7 @@ export const bushPresets: Record<string, Partial<BushOptions>> = {
   },
 }
 
-export function bush(options: BushOptions = {}): Mesh {
+export function bush(options: BushOptions = {}): Asset {
   const { o, rng } = setup(bushSchema, options, bushPresets)
 
   const shapeRng = rng.stream('shape')
@@ -119,15 +121,16 @@ export function bush(options: BushOptions = {}): Mesh {
   }
 
   const foliage = merge(...foliageParts)
-  const parts: Mesh[] = [foliage]
+  const children = [part('foliage', foliage, VERTEX_COLOR_MATERIAL)]
 
   // Optional berries/flowers: sample real points on the upper foliage surface so they
   // sit on the leaves, then nestle each slightly into the surface along its normal.
   if (o.berries > 0) {
+    const berryMeshes: Mesh[] = []
     const points = scatterOnSurface(foliage, o.berries, { rng: berryRng, minNormalY: 0.25 })
     for (const { position, normal } of points) {
       const s = o.berrySize * (0.7 + berryRng() * 0.6)
-      parts.push(
+      berryMeshes.push(
         sphere({ radius: s, widthSegments: 4, heightSegments: 3 })
           .translate(
             position[0] + normal[0] * s * 0.4,
@@ -137,15 +140,18 @@ export function bush(options: BushOptions = {}): Mesh {
           .vertexColor(o.berryColor),
       )
     }
+    children.push(part('berries', merge(...berryMeshes), VERTEX_COLOR_MATERIAL))
   }
 
-  const result = parts.length > 1 ? merge(...parts) : foliage
-  if (!useGeoSnow) return result
+  const asset = group('bush', children)
+  if (!useGeoSnow) return asset
 
-  return applySnow(result, {
+  const snowShell = applySnow(foliage, {
     depth: o.snowDepth,
     minAngle: 90 - o.snowAngle,
     color: pickRandom(o.snowColors, snowRng),
     seed: snowRng.seed(),
+    merge: false,
   })
+  return asset.add(part('snow', snowShell, VERTEX_COLOR_MATERIAL))
 }

@@ -3,31 +3,33 @@ import { merge, loft, thicken, snow as applySnow } from '../../../ops'
 import { setup, trunk, facetShade } from '../../../build'
 import { paletteGradient, pickRandom } from '../../../color'
 import { UberNoise } from '../../../noise'
+import { group, part, Asset } from '../../../core/asset'
+import { VERTEX_COLOR_MATERIAL } from '../../../core/material'
 import type { Mesh } from '../../../core/mesh'
 import type { Vec3 } from '../../../core/types'
 import type { OptionSchema, OptionInput } from '../../../core/schema'
 
 export const palmSchema = {
   seed:            { type: 'integer',     default: 1,    min: 1,    max: 100,  label: 'Seed', group: 'General' },
-  height:          { type: 'range',       default: 3.5,  min: 1.5,  max: 7,    step: 0.1,  label: 'Height', group: 'Trunk' },
-  trunkRadius:     { type: 'range',       default: 0.07, min: 0.03, max: 0.2,  step: 0.01, label: 'Trunk Radius', group: 'Trunk' },
+  height:          { type: 'range',       default: 9,    min: 4,    max: 18,   step: 0.2,  label: 'Height', group: 'Trunk' },
+  trunkRadius:     { type: 'range',       default: 0.18, min: 0.08, max: 0.5,  step: 0.02, label: 'Trunk Radius', group: 'Trunk' },
   trunkTaper:      { type: 'range',       default: 0.65, min: 0.1,  max: 0.9,  step: 0.05, label: 'Trunk Taper', group: 'Trunk' },
-  trunkCurve:      { type: 'range',       default: [0.3, 0.8], min: 0, max: 1.5, step: 0.05, label: 'Trunk Curve', group: 'Trunk' },
+  trunkCurve:      { type: 'range',       default: [0.75, 2],  min: 0, max: 4,   step: 0.1,  label: 'Trunk Curve', group: 'Trunk' },
   trunkSegments:   { type: 'integer',     default: 5,    min: 4,    max: 8,    label: 'Trunk Sides', group: 'Trunk' },
   trunkPathPoints: { type: 'integer',     default: 20,   min: 4,    max: 40,   label: 'Trunk Smoothness', group: 'Trunk' },
   fronds:          { type: 'integer',     default: [6, 9], min: 3, max: 14, label: 'Fronds', group: 'Fronds' },
-  frondLength:     { type: 'range',       default: 1.2,  min: 0.4,  max: 2.5,  step: 0.1,  label: 'Frond Length', group: 'Fronds' },
+  frondLength:     { type: 'range',       default: 3,    min: 1,    max: 6,    step: 0.2,  label: 'Frond Length', group: 'Fronds' },
   frondDroop:      { type: 'range',       default: [0.9, 1.4], min: 0.1, max: 2, step: 0.05, label: 'Frond Droop', group: 'Fronds' },
-  frondWidth:      { type: 'range',       default: [0.15, 0.35], min: 0.05, max: 0.6,  step: 0.02, label: 'Frond Width', group: 'Fronds' },
-  frondThickness:  { type: 'range',       default: 0.015, min: 0.005, max: 0.05, step: 0.005, label: 'Frond Thickness', group: 'Fronds' },
+  frondWidth:      { type: 'range',       default: [0.4, 0.9],   min: 0.12, max: 1.5,  step: 0.05, label: 'Frond Width', group: 'Fronds' },
+  frondThickness:  { type: 'range',       default: 0.04,  min: 0.012, max: 0.12, step: 0.01,  label: 'Frond Thickness', group: 'Fronds' },
   frondSegments:   { type: 'integer',     default: 5,    min: 3,    max: 10,   label: 'Frond Segments', group: 'Fronds' },
   frondCurveUp:    { type: 'range',       default: 0.3,  min: 0,    max: 0.8,  step: 0.05, label: 'Frond Curve Up', group: 'Fronds' },
   coconuts:        { type: 'integer',     default: [0, 4], min: 0, max: 6, label: 'Coconuts', group: 'Coconuts' },
-  coconutSize:     { type: 'range',       default: [0.05, 0.09], min: 0.02, max: 0.12, step: 0.005, label: 'Coconut Size', group: 'Coconuts' },
+  coconutSize:     { type: 'range',       default: [0.12, 0.22], min: 0.05, max: 0.3,  step: 0.01,  label: 'Coconut Size', group: 'Coconuts' },
   jitter:          { type: 'range',       default: 0.02, min: 0,    max: 0.08, step: 0.005, label: 'Jitter', group: 'General' },
   snowColors:      { type: 'color-array', default: [], min: 0, max: 6, label: 'Snow Colors', group: 'Snow' },
   snowAngle:       { type: 'range',       default: 20,   min: 0,    max: 80,   step: 5,    label: 'Snow Min Angle (°)', group: 'Snow' },
-  snowDepth:       { type: 'range',       default: 0,    min: 0,    max: 0.3,  step: 0.01, label: 'Snow Depth', group: 'Snow' },
+  snowDepth:       { type: 'range',       default: 0,    min: 0,    max: 0.6,  step: 0.02, label: 'Snow Depth', group: 'Snow' },
   trunkColors:     { type: 'color-array', default: ['#3a2a15', '#5a4025', '#6a5030'], min: 2, max: 6, label: 'Trunk Colors', group: 'Colors' },
   frondColors:     { type: 'color-array', default: ['#1a4a12', '#224e18', '#2a5520', '#1e4015'], min: 1, max: 8, label: 'Frond Colors', group: 'Colors' },
   coconutColor:    { type: 'color',       default: '#3a2810', label: 'Coconut Color', group: 'Coconuts' },
@@ -38,15 +40,15 @@ export type PalmOptions = Partial<OptionInput<typeof palmSchema>> & { preset?: s
 export const palmPresets: Record<string, Partial<PalmOptions>> = {
   default: {},
   tall: {
-    height: 6,
-    trunkCurve: [0.1, 0.4],
-    frondLength: 1.8,
+    height: 15,
+    trunkCurve: [0.25, 1],
+    frondLength: 4.5,
     fronds: [8, 12],
   },
   short: {
-    height: 2,
-    trunkCurve: [0.5, 1],
-    frondLength: 0.8,
+    height: 5,
+    trunkCurve: [1.25, 2.5],
+    frondLength: 2,
     fronds: [5, 7],
   },
   winter: {
@@ -57,7 +59,7 @@ export const palmPresets: Record<string, Partial<PalmOptions>> = {
   },
 }
 
-export function palm(options: PalmOptions = {}): Mesh {
+export function palm(options: PalmOptions = {}): Asset {
   const { o, rng } = setup(palmSchema, options, palmPresets)
 
   // Independent streams per concern (see common-tree for rationale).
@@ -113,10 +115,10 @@ export function palm(options: PalmOptions = {}): Mesh {
   const maxFronds = 14
   const frondSeeds = Array.from({ length: maxFronds }, () => frondRng.seed())
 
-  const colorNoise = new UberNoise({ seed: colorRng.seed(), scale: 1.5 })
+  const colorNoise = new UberNoise({ seed: colorRng.seed(), scale: 0.6 })
   const hasSnow = o.snowColors.length > 0
   const useGeoSnow = hasSnow && o.snowDepth > 0
-  const snowNoise = hasSnow ? new UberNoise({ seed: snowRng.seed(), scale: 2 }) : null
+  const snowNoise = hasSnow ? new UberNoise({ seed: snowRng.seed(), scale: 0.8 }) : null
   const snowThreshold = Math.sin(o.snowAngle * Math.PI / 180)
 
   for (let i = 0; i < frondCount; i++) {
@@ -211,13 +213,24 @@ export function palm(options: PalmOptions = {}): Mesh {
     coconutParts.push(coconut)
   }
 
-  const result = merge(trunkMesh, ...frondParts, ...coconutParts)
-  if (!useGeoSnow) return result
+  const fronds = merge(...frondParts)
+  const children = [
+    part('trunk', trunkMesh, VERTEX_COLOR_MATERIAL),
+    part('fronds', fronds, VERTEX_COLOR_MATERIAL),
+  ]
+  if (coconutParts.length > 0) {
+    children.push(part('coconuts', merge(...coconutParts), VERTEX_COLOR_MATERIAL))
+  }
+  const asset = group('palm', children)
+  if (!useGeoSnow) return asset
 
-  return applySnow(result, {
+  // Snow settles on the fronds.
+  const snowShell = applySnow(fronds, {
     depth: o.snowDepth,
     minAngle: 90 - o.snowAngle,
     color: pickRandom(o.snowColors, snowRng),
     seed: snowRng.seed(),
+    merge: false,
   })
+  return asset.add(part('snow', snowShell, VERTEX_COLOR_MATERIAL))
 }

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { tree, pine, palm, bush, grass, fern, flower, deadTree, leafyTree, rock, sharpRock, blockRock, mushroom } from '../src/generators'
 import type { Mesh } from '../src/core/mesh'
+import type { Asset } from '../src/core/asset'
 
 const generators = [
   { name: 'tree', gen: tree },
@@ -28,9 +29,9 @@ const golden: Record<string, { verts: number }> = {
   pine: { verts: 840 },
   palm: { verts: 3630 },
   bush: { verts: 3600 },
-  grass: { verts: 768 },
-  fern: { verts: 6480 },
-  flower: { verts: 654 },
+  grass: { verts: 1632 },
+  fern: { verts: 13932 },
+  flower: { verts: 1050 },
   dead: { verts: 1400 },
   leafy: { verts: 7020 },
   rock: { verts: 1440 },
@@ -39,7 +40,7 @@ const golden: Record<string, { verts: number }> = {
   mushroom: { verts: 1584 },
 }
 
-function allFinite(m: Mesh): boolean {
+function allFinite(m: Mesh | Asset): boolean {
   const p = m.positions
   for (let i = 0; i < p.length; i++) if (!Number.isFinite(p[i])) return false
   return true

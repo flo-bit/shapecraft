@@ -1,6 +1,9 @@
+import * as THREE from 'three'
 import { sphere } from '../../../primitives'
 import { merge } from '../../../ops'
 import { setup, trunk, blade } from '../../../build'
+import { group, part, Asset } from '../../../core/asset'
+import { VERTEX_COLOR_MATERIAL } from '../../../core/material'
 import type { Mesh } from '../../../core/mesh'
 import type { Vec3 } from '../../../core/types'
 import type { OptionSchema, OptionInput } from '../../../core/schema'
@@ -37,7 +40,7 @@ function norm(x: number, y: number, z: number): Vec3 {
   return [x / l, y / l, z / l]
 }
 
-export function flower(options: FlowerOptions = {}): Mesh {
+export function flower(options: FlowerOptions = {}): Asset {
   const { o, rng } = setup(flowerSchema, options, flowerPresets)
   const shapeRng = rng.stream('shape')
 
@@ -45,10 +48,8 @@ export function flower(options: FlowerOptions = {}): Mesh {
   const leanX = Math.cos(leanAngle) * o.lean
   const leanZ = Math.sin(leanAngle) * o.lean
 
-  const parts: Mesh[] = []
-
   // Stem.
-  parts.push(trunk({
+  const stemMesh = trunk({
     height: o.height,
     baseRadius: o.stemRadius,
     topRadius: o.stemRadius * 0.7,
@@ -60,24 +61,47 @@ export function flower(options: FlowerOptions = {}): Mesh {
     segments: 5,
     heightSegments: 4,
     colors: o.stemColors,
-  }))
+  })
 
   const head: Vec3 = [leanX, o.height, leanZ]
 
-  // Flower center.
-  parts.push(
+  // The bloom follows the stem: the lean curve is `lean·t²`, so the tip tangent is
+  // (2·leanX, height, 2·leanZ). A small random nod keeps even upright flowers from
+  // pointing perfectly skyward.
+  const nodAngle = shapeRng() * Math.PI * 2
+  const nodAmount = (0.05 + shapeRng() * 0.15) * o.height
+  const tipDir = norm(
+    2 * leanX + Math.cos(nodAngle) * nodAmount,
+    o.height,
+    2 * leanZ + Math.sin(nodAngle) * nodAmount,
+  )
+  const headTransform = new THREE.Matrix4().compose(
+    new THREE.Vector3(head[0], head[1], head[2]),
+    new THREE.Quaternion().setFromUnitVectors(
+      new THREE.Vector3(0, 1, 0),
+      new THREE.Vector3(tipDir[0], tipDir[1], tipDir[2]),
+    ),
+    new THREE.Vector3(1, 1, 1),
+  )
+
+  // Flower head: center disc + petals, built around the origin facing +Y and then
+  // tilted/translated onto the stem tip as one piece.
+  const headParts: Mesh[] = [
     sphere({ radius: o.centerSize, widthSegments: 6, heightSegments: 4 })
       .scale(1, 0.6, 1)
-      .translate(head[0], head[1], head[2])
       .vertexColor(o.centerColor),
-  )
+  ]
+  const leafParts: Mesh[] = []
 
   // Petals arranged in a ring, lifting up into a cup.
   for (let i = 0; i < o.petals; i++) {
     const angle = (i / o.petals) * Math.PI * 2 + (shapeRng() - 0.5) * 0.15
     const ca = Math.cos(angle), sa = Math.sin(angle)
     const dir = norm(ca, o.petalLift * 1.4, sa)
-    const start: Vec3 = [head[0] + ca * o.centerSize, head[1], head[2] + sa * o.centerSize]
+    // Petals root well inside the center disc and slightly below its equator,
+    // so they wrap under the center with no gap at the base.
+    const inset = o.centerSize * 0.4
+    const start: Vec3 = [ca * inset, -o.centerSize * 0.25, sa * inset]
     const segs = 3
     const path: Vec3[] = []
     for (let j = 0; j <= segs; j++) {
@@ -88,9 +112,11 @@ export function flower(options: FlowerOptions = {}): Mesh {
         start[2] + dir[2] * o.petalLength * t,
       ])
     }
-    parts.push(
-      blade(path, { width: (t) => o.petalWidth * Math.sin(Math.min(1, t) * Math.PI) })
-        .vertexColor(o.petalColor),
+    headParts.push(
+      blade(path, {
+        width: (t) => o.petalWidth * Math.sin(Math.min(1, t) * Math.PI),
+        thickness: o.petalWidth * 0.15,
+      }).vertexColor(o.petalColor),
     )
   }
 
@@ -112,11 +138,18 @@ export function flower(options: FlowerOptions = {}): Mesh {
         base[2] + dir[2] * o.leafLength * t,
       ])
     }
-    parts.push(
-      blade(path, { width: (t) => o.leafLength * 0.3 * Math.sin(Math.min(1, t) * Math.PI) })
-        .vertexColor(o.stemColors[o.stemColors.length - 1]),
+    leafParts.push(
+      blade(path, {
+        width: (t) => o.leafLength * 0.3 * Math.sin(Math.min(1, t) * Math.PI),
+        thickness: o.leafLength * 0.035,
+      }).vertexColor(o.stemColors[o.stemColors.length - 1]),
     )
   }
 
-  return merge(...parts)
+  const children = [
+    part('stem', stemMesh, VERTEX_COLOR_MATERIAL),
+    part('head', merge(...headParts).transform(headTransform), VERTEX_COLOR_MATERIAL),
+  ]
+  if (leafParts.length > 0) children.push(part('leaves', merge(...leafParts), VERTEX_COLOR_MATERIAL))
+  return group('flower', children)
 }

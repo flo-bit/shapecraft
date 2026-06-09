@@ -1,4 +1,5 @@
 import type { ColorInput } from './types'
+import type { TextureData } from '../texture/types'
 
 /**
  * A surface material, decoupled from geometry. A part references a Material; the same
@@ -22,6 +23,14 @@ export interface Material {
   flatShading?: boolean
   /** Render both sides (for thin geometry like leaves/blades). Default false. */
   doubleSided?: boolean
+  /** Albedo texture (multiplied with `color` / vertex colors). Needs UVs — see `Mesh.computeUVs()`. */
+  map?: TextureData
+  /** Tangent-space normal map (OpenGL convention, as produced by `normalMap()`). */
+  normalMap?: TextureData
+  /** Alpha cutout mask (foliage cards, leaf shapes). Enables alpha testing. */
+  alphaMap?: TextureData
+  /** Alpha-test cutoff when `alphaMap` is set. Default 0.5. */
+  alphaTest?: number
 }
 
 /** Convenience identity helper for authoring materials inline with defaults documented. */

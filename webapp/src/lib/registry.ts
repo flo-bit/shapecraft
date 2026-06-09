@@ -76,7 +76,7 @@ export const GENERATORS: GeneratorEntry[] = [
 		gen: tree,
 		schema: treeSchema,
 		presets: treePresets,
-		viewDistance: 7
+		viewDistance: 13
 	},
 	{
 		id: 'leafy',
@@ -85,7 +85,7 @@ export const GENERATORS: GeneratorEntry[] = [
 		gen: leafyTree,
 		schema: leafyTreeSchema,
 		presets: leafyTreePresets,
-		viewDistance: 7
+		viewDistance: 9
 	},
 	{
 		id: 'pine',
@@ -94,7 +94,7 @@ export const GENERATORS: GeneratorEntry[] = [
 		gen: pine,
 		schema: pineSchema,
 		presets: pinePresets,
-		viewDistance: 8
+		viewDistance: 18
 	},
 	{
 		id: 'palm',
@@ -103,7 +103,7 @@ export const GENERATORS: GeneratorEntry[] = [
 		gen: palm,
 		schema: palmSchema,
 		presets: palmPresets,
-		viewDistance: 9
+		viewDistance: 15
 	},
 	{
 		id: 'dead',
@@ -112,7 +112,7 @@ export const GENERATORS: GeneratorEntry[] = [
 		gen: deadTree,
 		schema: deadTreeSchema,
 		presets: deadTreePresets,
-		viewDistance: 8
+		viewDistance: 9
 	},
 	{
 		id: 'bush',

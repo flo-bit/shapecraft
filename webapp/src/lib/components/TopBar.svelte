@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { Sparkles, Dices, Download } from '@lucide/svelte';
+	import { styles } from 'shapecraft/style';
 	import { CATEGORIES, type GeneratorEntry } from '$lib/registry';
+	import { getStyle, setStyle } from '$lib/editor.svelte';
 
 	let {
 		entry,
@@ -9,6 +11,7 @@
 	}: { entry: GeneratorEntry; ondice: () => void; onexport: () => void } = $props();
 
 	const category = $derived(CATEGORIES.find((c) => c.id === entry.category)!);
+	const styleList = Object.values(styles);
 </script>
 
 <header class="flex h-13 shrink-0 items-center gap-3.5 border-b border-line bg-panel px-4">
@@ -27,6 +30,25 @@
 		<b class="font-semibold text-accent">{entry.label}</b>
 	</div>
 	<div class="flex-1"></div>
+	<div
+		class="flex h-8.5 items-center gap-[3px] rounded-[9px] border border-line2 bg-panel2 p-[3px]"
+		role="radiogroup"
+		aria-label="Art style"
+	>
+		{#each styleList as style (style.name)}
+			<button
+				type="button"
+				role="radio"
+				aria-checked={getStyle() === style.name}
+				class="h-full rounded-[6px] px-3 text-[12px] font-semibold {getStyle() === style.name
+					? 'bg-accent text-accent-ink'
+					: 'text-muted hover:text-ink'}"
+				onclick={() => setStyle(style.name)}
+			>
+				{style.label}
+			</button>
+		{/each}
+	</div>
 	<button
 		type="button"
 		class="grid size-8.5 place-items-center rounded-[9px] border border-line2 bg-panel2 text-muted hover:border-[#3c424d] hover:text-ink"

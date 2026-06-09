@@ -1,5 +1,7 @@
 import { merge } from '../../../ops'
 import { setup, blade, heightShade } from '../../../build'
+import { part, Asset } from '../../../core/asset'
+import { VERTEX_COLOR_MATERIAL } from '../../../core/material'
 import type { Mesh } from '../../../core/mesh'
 import type { Vec3 } from '../../../core/types'
 import type { OptionSchema, OptionInput } from '../../../core/schema'
@@ -25,7 +27,7 @@ export const grassPresets: Record<string, Partial<GrassOptions>> = {
   lush: { blades: 30, colors: ['#2f6a1e', '#3f8a26', '#62ad36'] },
 }
 
-export function grass(options: GrassOptions = {}): Mesh {
+export function grass(options: GrassOptions = {}): Asset {
   const { o, rng } = setup(grassSchema, options, grassPresets)
   const shapeRng = rng.stream('shape')
 
@@ -58,8 +60,10 @@ export function grass(options: GrassOptions = {}): Mesh {
       path.push([bx + ldx * hd, y, bz + ldz * hd])
     }
 
-    blades.push(blade(path, { width: w }).vertexColor(heightShade(o.colors, h)))
+    blades.push(
+      blade(path, { width: w, thickness: w * 0.2 }).vertexColor(heightShade(o.colors, h)),
+    )
   }
 
-  return merge(...blades)
+  return part('grass', merge(...blades), VERTEX_COLOR_MATERIAL)
 }

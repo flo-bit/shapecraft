@@ -2,6 +2,8 @@ import { merge, snow as applySnow, decimate } from '../../../ops'
 import { setup, branches, foliageBlob, facetShade, heightShade, metaballs, type MetaBall } from '../../../build'
 import { pickRandom } from '../../../color'
 import { UberNoise } from '../../../noise'
+import { group, part, Asset } from '../../../core/asset'
+import { VERTEX_COLOR_MATERIAL } from '../../../core/material'
 import type { Mesh } from '../../../core/mesh'
 import type { OptionSchema, OptionInput } from '../../../core/schema'
 
@@ -44,7 +46,7 @@ export const leafyTreePresets: Record<string, Partial<LeafyTreeOptions>> = {
   },
 }
 
-export function leafyTree(options: LeafyTreeOptions = {}): Mesh {
+export function leafyTree(options: LeafyTreeOptions = {}): Asset {
   const { o, rng } = setup(leafyTreeSchema, options, leafyTreePresets)
   const leafRng = rng.stream('leaf')
   const colorRng = rng.stream('color')
@@ -84,8 +86,7 @@ export function leafyTree(options: LeafyTreeOptions = {}): Mesh {
     snow: snowOpt ? { color: pickRandom(o.snowColors, snowRng), ...snowOpt } : undefined,
   })
 
-  const parts: Mesh[] = [trunk]
-
+  let canopyMesh: Mesh
   if (o.blobCanopy) {
     // Merge all leaf clusters into one melted-blob canopy via a metaball isosurface.
     const balls: MetaBall[] = tips.map((tip) => ({
@@ -94,16 +95,15 @@ export function leafyTree(options: LeafyTreeOptions = {}): Mesh {
     }))
     let canopy = metaballs(balls, { resolution: 28, isolevel: 0.5, support: 2.0 })
     if (o.blobDetail < 1) canopy = decimate(canopy, { ratio: o.blobDetail })
-    parts.push(
-      canopy
-        .jitter(o.leafSize * o.jitter, { seed: leafRng.seed() })
-        .faceColor(shadeFor(pickRandom(o.leafColors, colorRng))),
-    )
+    canopyMesh = canopy
+      .jitter(o.leafSize * o.jitter, { seed: leafRng.seed() })
+      .faceColor(shadeFor(pickRandom(o.leafColors, colorRng)))
   } else {
     // A separate foliage cluster at each branch tip.
+    const blobs: Mesh[] = []
     for (const tip of tips) {
       const r = o.leafSize * (0.7 + leafRng() * 0.6)
-      parts.push(
+      blobs.push(
         foliageBlob({
           radius: r,
           detail: r * 0.7,
@@ -116,15 +116,22 @@ export function leafyTree(options: LeafyTreeOptions = {}): Mesh {
           .faceColor(shadeFor(pickRandom(o.leafColors, colorRng))),
       )
     }
+    canopyMesh = merge(...blobs)
   }
 
-  const result = merge(...parts)
-  if (!useGeoSnow) return result
+  const asset = group('leafyTree', [
+    part('trunk', trunk, VERTEX_COLOR_MATERIAL),
+    part('canopy', canopyMesh, VERTEX_COLOR_MATERIAL),
+  ])
+  if (!useGeoSnow) return asset
 
-  return applySnow(result, {
+  // Snow settles on the canopy.
+  const snowShell = applySnow(canopyMesh, {
     depth: o.snowDepth,
     minAngle: 90 - o.snowAngle,
     color: pickRandom(o.snowColors, snowRng),
     seed: snowRng.seed(),
+    merge: false,
   })
+  return asset.add(part('snow', snowShell, VERTEX_COLOR_MATERIAL))
 }

@@ -1,8 +1,9 @@
 <script lang="ts">
+	import type * as THREE from 'three';
 	import { page } from '$app/state';
-	import { toThreeMesh } from 'shapecraft/three';
+	import { toThree } from 'shapecraft/three';
 	import { getGenerator } from '$lib/registry';
-	import { buildOptions, displayValue, randomizeSeed } from '$lib/editor.svelte';
+	import { buildOptions, displayValue, getStyle, randomizeSeed } from '$lib/editor.svelte';
 	import { exportGLB } from '$lib/export-glb';
 	import TopBar from '$lib/components/TopBar.svelte';
 	import Rail from '$lib/components/Rail.svelte';
@@ -12,24 +13,36 @@
 
 	const entry = $derived(getGenerator(page.params.id!)!);
 
+	// toThree (not toThreeMesh): keeps per-part materials, so a style's shading
+	// model (e.g. ghibli's smooth shading) survives into the viewport and export.
 	const result = $derived.by(() => {
 		try {
-			return { model: toThreeMesh(entry.gen(buildOptions(entry))), error: null };
+			const model = toThree(entry.gen(buildOptions(entry)), {
+				castShadow: true,
+				receiveShadow: true
+			});
+			return { model, error: null };
 		} catch (e) {
 			return { model: null, error: e instanceof Error ? e.message : String(e) };
 		}
 	});
 	const model = $derived(result.model);
-	const tris = $derived(
-		model ? (model.geometry.index?.count ?? model.geometry.getAttribute('position').count) / 3 : 0
-	);
+	const tris = $derived.by(() => {
+		let n = 0;
+		model?.traverse((o) => {
+			const mesh = o as THREE.Mesh;
+			if (mesh.isMesh)
+				n += (mesh.geometry.index?.count ?? mesh.geometry.getAttribute('position').count) / 3;
+		});
+		return n;
+	});
 	const seed = $derived(displayValue(entry, 'seed') as number | undefined);
 
 	function dice() {
 		randomizeSeed(entry);
 	}
 	function doExport() {
-		if (model) exportGLB(model, `${entry.id}-seed-${seed ?? 0}`);
+		if (model) exportGLB(model, `${entry.id}-${getStyle()}-seed-${seed ?? 0}`);
 	}
 </script>
 

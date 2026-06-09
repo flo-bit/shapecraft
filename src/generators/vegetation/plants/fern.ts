@@ -1,5 +1,7 @@
 import { merge } from '../../../ops'
 import { setup, blade, heightShade } from '../../../build'
+import { part, Asset } from '../../../core/asset'
+import { VERTEX_COLOR_MATERIAL } from '../../../core/material'
 import type { Mesh } from '../../../core/mesh'
 import type { Vec3 } from '../../../core/types'
 import type { OptionSchema, OptionInput } from '../../../core/schema'
@@ -32,7 +34,7 @@ function norm(x: number, y: number, z: number): Vec3 {
   return [x / l, y / l, z / l]
 }
 
-export function fern(options: FernOptions = {}): Mesh {
+export function fern(options: FernOptions = {}): Asset {
   const { o, rng } = setup(fernSchema, options, fernPresets)
   const shapeRng = rng.stream('shape')
 
@@ -67,7 +69,7 @@ export function fern(options: FernOptions = {}): Mesh {
       rachisPts.push(p)
       if (p[1] > maxY) maxY = p[1]
     }
-    parts.push(blade(rachisPts, { width: o.rachisWidth }))
+    parts.push(blade(rachisPts, { width: o.rachisWidth, thickness: o.rachisWidth * 0.6 }))
 
     // Leaflets down both sides, longest in the lower third, shrinking to the tip.
     for (let k = 0; k < o.leaflets; k++) {
@@ -97,12 +99,12 @@ export function fern(options: FernOptions = {}): Mesh {
             base[2] + dir[2] * ll * t,
           ])
         }
-        parts.push(blade(leafPts, { width: ll * 0.3 }))
+        parts.push(blade(leafPts, { width: ll * 0.3, thickness: ll * 0.035 }))
       }
     }
 
     fronds.push(merge(...parts).vertexColor(heightShade(o.colors, maxY * 0.9 || L)))
   }
 
-  return merge(...fronds)
+  return part('fern', merge(...fronds), VERTEX_COLOR_MATERIAL)
 }

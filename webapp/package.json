@@ -29,7 +29,7 @@
 		"@threlte/core": "^8.5.16",
 		"@threlte/extras": "^9.21.0",
 		"@types/node": "^22",
-		"@types/three": "0.170.0",
+		"@types/three": "0.184.1",
 		"@vitest/browser-playwright": "^4.1.8",
 		"eslint": "^10.4.1",
 		"eslint-config-prettier": "^10.1.8",
@@ -50,6 +50,6 @@
 	},
 	"dependencies": {
 		"culori": "^4.0.2",
-		"three": "0.170.0"
+		"three": "0.184.0"
 	}
 }

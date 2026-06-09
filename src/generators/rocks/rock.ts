@@ -2,7 +2,8 @@ import { setup, foliageBlob, facetShade } from '../../build'
 import { snow as applySnow } from '../../ops'
 import { pickRandom } from '../../color'
 import { UberNoise } from '../../noise'
-import type { Mesh } from '../../core/mesh'
+import { part, Asset } from '../../core/asset'
+import { VERTEX_COLOR_MATERIAL } from '../../core/material'
 import type { OptionSchema, OptionInput } from '../../core/schema'
 
 export const rockSchema = {
@@ -32,7 +33,7 @@ export const rockPresets: Record<string, Partial<RockOptions>> = {
   snowy: { snowColors: ['#eef0f5', '#e4e8f0', '#f4f6fb'], snowDepth: 0.06, snowAngle: 30 },
 }
 
-export function rock(options: RockOptions = {}): Mesh {
+export function rock(options: RockOptions = {}): Asset {
   const { o, rng } = setup(rockSchema, options, rockPresets)
   const shapeRng = rng.stream('shape')
   const colorRng = rng.stream('color')
@@ -73,7 +74,7 @@ export function rock(options: RockOptions = {}): Mesh {
       ? { color: moss, noise: mossNoise, threshold: mossThreshold, noiseAmount: 0.25 }
       : undefined
 
-  const shaped = blob
+  const rockMesh = blob
     .warp((p) => (p[1] < baseY ? [p[0], baseY, p[2]] : p))
     .translate(0, -baseY, 0)
     .faceColor(facetShade({
@@ -84,12 +85,15 @@ export function rock(options: RockOptions = {}): Mesh {
       noiseAmount: 0.12,
       snow: overlay,
     }))
-  if (!useGeoSnow) return shaped
+  const asset = part('rock', rockMesh, VERTEX_COLOR_MATERIAL)
+  if (!useGeoSnow) return asset
 
-  return applySnow(shaped, {
+  const snowShell = applySnow(rockMesh, {
     depth: o.snowDepth,
     minAngle: 90 - o.snowAngle,
     color: pickRandom(o.snowColors, snowRng),
     seed: snowRng.seed(),
+    merge: false,
   })
+  return asset.add(part('snow', snowShell, VERTEX_COLOR_MATERIAL))
 }

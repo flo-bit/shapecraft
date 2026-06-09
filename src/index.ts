@@ -8,8 +8,8 @@ export type { Vec2, Vec3, Vec4, ColorInput, ColorFn, DisplaceFn, WarpFn, NoiseLi
 export { box, sphere, cylinder, plane, cone, torus, icosphere } from './primitives'
 
 // Operations
-export { merge, center, clone, loft, tube, thicken, snow, decimate } from './ops'
-export type { SnowOptions, DecimateOptions } from './ops'
+export { merge, center, clone, loft, tube, thicken, snow, decimate, weld, mirror, array, radialArray, boolean, union, subtract, intersect, extrudeFaces, insetFaces, bevel } from './ops'
+export type { SnowOptions, DecimateOptions, WeldOptions, MirrorOptions, ArrayOptions, RadialArrayOptions, BooleanOp, ExtrudeOptions, InsetOptions, BevelOptions, FaceFilter } from './ops'
 
 // Modifiers
 export { twist, bend, taper } from './modifiers'
@@ -21,6 +21,14 @@ export { pickRandom, paletteGradient, axisGradient, noiseColor, varyColor, type 
 
 // UV
 export { projectUVs } from './uv'
+
+// Texture (full field/pattern toolkit via 'shapecraft/texture')
+export { rasterize, noiseField, voronoi, normalMap, textureStyles } from './texture'
+export type { Field, TextureData, TextureStyle } from './texture'
+
+// Style profiles — cross-cutting style system (see 'shapecraft/style')
+export { lowpoly, ghibli, styles, resolveStyle, stylePalette, styleMaterial } from './style'
+export type { StyleProfile, StyleGeometry, StyleInput } from './style'
 
 // Utilities
 export { createRng } from './core/rng'

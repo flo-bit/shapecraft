@@ -3,6 +3,8 @@ import { merge } from '../../../ops'
 import { setup, trunk, foliageBlob, facetShade, scatterOnSurface } from '../../../build'
 import { pickRandom } from '../../../color'
 import { UberNoise } from '../../../noise'
+import { part, Asset } from '../../../core/asset'
+import { VERTEX_COLOR_MATERIAL } from '../../../core/material'
 import type { Mesh } from '../../../core/mesh'
 import type { OptionSchema, OptionInput } from '../../../core/schema'
 
@@ -61,7 +63,7 @@ export const mushroomPresets: Record<string, Partial<MushroomOptions>> = {
   },
 }
 
-export function mushroom(options: MushroomOptions = {}): Mesh {
+export function mushroom(options: MushroomOptions = {}): Asset {
   const { o, rng } = setup(mushroomSchema, options, mushroomPresets)
   const shapeRng = rng.stream('shape')
   const colorRng = rng.stream('color')
@@ -150,5 +152,5 @@ export function mushroom(options: MushroomOptions = {}): Mesh {
     }
   }
 
-  return merge(...parts)
+  return part('mushroom', merge(...parts), VERTEX_COLOR_MATERIAL)
 }

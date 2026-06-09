@@ -1,5 +1,6 @@
 import { setup, branches, heightShade } from '../../../build'
-import type { Mesh } from '../../../core/mesh'
+import { part, Asset } from '../../../core/asset'
+import { VERTEX_COLOR_MATERIAL } from '../../../core/material'
 import type { OptionSchema, OptionInput } from '../../../core/schema'
 
 export const deadTreeSchema = {
@@ -28,7 +29,7 @@ export const deadTreePresets: Record<string, Partial<DeadTreeOptions>> = {
   stump: { height: 1.0, levels: 3, trunkRadius: 0.3, branches: 4, taper: 1.3 },
 }
 
-export function deadTree(options: DeadTreeOptions = {}): Mesh {
+export function deadTree(options: DeadTreeOptions = {}): Asset {
   const { o, rng } = setup(deadTreeSchema, options, deadTreePresets)
 
   const { mesh } = branches({
@@ -48,5 +49,5 @@ export function deadTree(options: DeadTreeOptions = {}): Mesh {
   })
 
   const top = mesh.boundingBox.max.y || o.height
-  return mesh.vertexColor(heightShade(o.colors, top))
+  return part('deadTree', mesh.vertexColor(heightShade(o.colors, top)), VERTEX_COLOR_MATERIAL)
 }

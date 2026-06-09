@@ -25,6 +25,8 @@ export interface ColorOption {
   label?: string
   /** Optional UI grouping (e.g. 'Trunk', 'Canopy'); ungrouped params land in 'General' */
   group?: string
+  /** Semantic color role ('bark', 'leaf', …) — lets a StyleProfile supply the default. */
+  role?: string
 }
 
 export interface ColorArrayOption {
@@ -35,6 +37,8 @@ export interface ColorArrayOption {
   label?: string
   /** Optional UI grouping (e.g. 'Trunk', 'Canopy'); ungrouped params land in 'General' */
   group?: string
+  /** Semantic color role ('bark', 'leaf', …) — lets a StyleProfile supply the default. */
+  role?: string
 }
 
 export interface BooleanOption {
@@ -89,20 +93,30 @@ export type OptionInput<S extends OptionSchema> = {
 /**
  * Resolve options for a generator: apply preset, then overrides, then fill schema defaults.
  * Numeric values can be [min, max] tuples — resolved using rand() if provided.
+ *
+ * Precedence: explicit overrides > preset > style palette (for `role`-tagged
+ * color options) > schema default. A style re-colors everything it has a role
+ * for, but never beats an author's or preset's explicit choice.
  */
 export function resolveOptions<S extends OptionSchema>(
   schema: S,
   options: Record<string, any>,
   presets?: Record<string, Record<string, any>>,
   rand?: () => number,
+  style?: { palettes: Record<string, string[]> },
 ): OptionValues<S> {
   const presetName = options.preset ?? 'default'
   const preset = presets?.[presetName] ?? {}
-  const { preset: _, ...overrides } = options
+  const { preset: _, style: _s, ...overrides } = options
 
   const resolved: Record<string, any> = {}
   for (const [key, def] of Object.entries(schema)) {
-    let val = overrides[key] ?? preset[key] ?? structuredClone(def.default)
+    const role = (def.type === 'color' || def.type === 'color-array') ? def.role : undefined
+    const stylePal = role && style ? style.palettes[role] : undefined
+    const styleVal = stylePal === undefined ? undefined
+      : def.type === 'color' ? stylePal[0]
+      : [...stylePal]
+    let val = overrides[key] ?? preset[key] ?? styleVal ?? structuredClone(def.default)
 
     // Resolve [min, max] ranges for numeric types
     if (Array.isArray(val) && val.length === 2 && typeof val[0] === 'number' && typeof val[1] === 'number'

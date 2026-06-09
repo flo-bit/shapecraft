@@ -3,6 +3,8 @@ import { pickRandom } from '../../color'
 import { UberNoise } from '../../noise'
 import { box } from '../../primitives'
 import { merge, snow as applySnow } from '../../ops'
+import { part, Asset } from '../../core/asset'
+import { VERTEX_COLOR_MATERIAL } from '../../core/material'
 import type { Mesh } from '../../core/mesh'
 import type { OptionSchema, OptionInput } from '../../core/schema'
 
@@ -36,7 +38,7 @@ export const blockRockPresets: Record<string, Partial<BlockRockOptions>> = {
   snowy: { snowColors: ['#eef0f5', '#e4e8f0', '#f4f6fb'], snowDepth: 0.06, snowAngle: 18 },
 }
 
-export function blockRock(options: BlockRockOptions = {}): Mesh {
+export function blockRock(options: BlockRockOptions = {}): Asset {
   const { o, rng } = setup(blockRockSchema, options, blockRockPresets)
   const shapeRng = rng.stream('shape')
   const colorRng = rng.stream('color')
@@ -106,13 +108,16 @@ export function blockRock(options: BlockRockOptions = {}): Mesh {
     blocks.push(block)
   }
 
-  const result = merge(...blocks)
-  if (!useGeoSnow) return result
+  const rockMesh = merge(...blocks)
+  const asset = part('rock', rockMesh, VERTEX_COLOR_MATERIAL)
+  if (!useGeoSnow) return asset
 
-  return applySnow(result, {
+  const snowShell = applySnow(rockMesh, {
     depth: o.snowDepth,
     minAngle: 90 - o.snowAngle,
     color: pickRandom(o.snowColors, snowRng),
     seed: snowRng.seed(),
+    merge: false,
   })
+  return asset.add(part('snow', snowShell, VERTEX_COLOR_MATERIAL))
 }

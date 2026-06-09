@@ -3,6 +3,7 @@ import { Mesh } from '../core/mesh'
 import { Asset } from '../core/asset'
 import { parseColor } from '../core/math'
 import type { Material } from '../core/material'
+import { toDataTexture } from './texture'
 
 /** Build a THREE material from a shapecraft Material (or sensible defaults). */
 export function toThreeMaterial(m: Material | null, hasVertexColors: boolean): THREE.Material {
@@ -15,6 +16,10 @@ export function toThreeMaterial(m: Material | null, hasVertexColors: boolean): T
     emissive: m?.emissive !== undefined ? parseColor(m.emissive) : new THREE.Color(0x000000),
     flatShading: m?.flatShading ?? true,
     side: m?.doubleSided ? THREE.DoubleSide : THREE.FrontSide,
+    map: m?.map ? toDataTexture(m.map) : null,
+    normalMap: m?.normalMap ? toDataTexture(m.normalMap, { colorSpace: 'linear' }) : null,
+    alphaMap: m?.alphaMap ? toDataTexture(m.alphaMap, { colorSpace: 'linear' }) : null,
+    alphaTest: m?.alphaMap ? (m.alphaTest ?? 0.5) : 0,
   })
 }
 

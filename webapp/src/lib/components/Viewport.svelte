@@ -1,7 +1,8 @@
 <script lang="ts">
 	import type * as THREE from 'three';
+	import { ACESFilmicToneMapping } from 'three';
 	import { Canvas } from '@threlte/core';
-	import { Box, Grid3x3, TreeDeciduous, Sprout, Mountain } from '@lucide/svelte';
+	import { Box, Grid3x3, PersonStanding, TreeDeciduous, Sprout, Mountain } from '@lucide/svelte';
 	import type { GeneratorEntry } from '$lib/registry';
 	import Scene from './Scene.svelte';
 
@@ -12,7 +13,7 @@
 		tris,
 		error
 	}: {
-		model: THREE.Mesh | null;
+		model: THREE.Object3D | null;
 		entry: GeneratorEntry;
 		seed: number | undefined;
 		tris: number;
@@ -21,6 +22,7 @@
 
 	let showGrid = $state(false);
 	let wireframe = $state(false);
+	let showScale = $state(true);
 
 	const icons = { trees: TreeDeciduous, plants: Sprout, rocks: Mountain };
 	const CategoryIcon = $derived(icons[entry.category]);
@@ -30,8 +32,9 @@
 </script>
 
 <div class="relative min-w-0 flex-1 overflow-hidden">
-	<Canvas>
-		<Scene {model} viewDistance={entry.viewDistance} {showGrid} {wireframe} />
+	<!-- Threlte defaults to AgX tone mapping, which washes out the stylized vertex colors -->
+	<Canvas toneMapping={ACESFilmicToneMapping}>
+		<Scene {model} viewDistance={entry.viewDistance} {showGrid} {wireframe} {showScale} />
 	</Canvas>
 
 	<!-- title card -->
@@ -68,6 +71,16 @@
 			onclick={() => (wireframe = !wireframe)}
 		>
 			<Box size={17} />
+		</button>
+		<button
+			type="button"
+			class="grid size-8.5 place-items-center rounded-lg {showScale
+				? 'bg-accent text-accent-ink'
+				: 'text-white/70 hover:bg-white/10 hover:text-white'}"
+			title="Toggle human scale reference (1.8 m)"
+			onclick={() => (showScale = !showScale)}
+		>
+			<PersonStanding size={17} />
 		</button>
 	</div>
 
