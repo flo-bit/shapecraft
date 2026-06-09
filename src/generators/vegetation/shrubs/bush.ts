@@ -1,10 +1,10 @@
-import { sphere } from '../primitives'
-import { merge, snow as applySnow } from '../ops'
-import { setup, foliageBlob, facetShade, scatterOnSurface } from '../build'
-import { pickRandom } from '../color'
-import { UberNoise } from '../noise'
-import type { Mesh } from '../core/mesh'
-import type { OptionSchema, OptionInput } from '../core/schema'
+import { sphere } from '../../../primitives'
+import { merge, snow as applySnow } from '../../../ops'
+import { setup, foliageBlob, facetShade, scatterOnSurface } from '../../../build'
+import { pickRandom } from '../../../color'
+import { UberNoise } from '../../../noise'
+import type { Mesh } from '../../../core/mesh'
+import type { OptionSchema, OptionInput } from '../../../core/schema'
 
 export const bushSchema = {
   seed:            { type: 'integer',     default: 1,    min: 1,    max: 100,  label: 'Seed' },

@@ -1,11 +1,11 @@
-import { sphere } from '../primitives'
-import { merge, loft, thicken, snow as applySnow } from '../ops'
-import { setup, trunk, facetShade } from '../build'
-import { paletteGradient, pickRandom } from '../color'
-import { UberNoise } from '../noise'
-import type { Mesh } from '../core/mesh'
-import type { Vec3 } from '../core/types'
-import type { OptionSchema, OptionInput } from '../core/schema'
+import { sphere } from '../../../primitives'
+import { merge, loft, thicken, snow as applySnow } from '../../../ops'
+import { setup, trunk, facetShade } from '../../../build'
+import { paletteGradient, pickRandom } from '../../../color'
+import { UberNoise } from '../../../noise'
+import type { Mesh } from '../../../core/mesh'
+import type { Vec3 } from '../../../core/types'
+import type { OptionSchema, OptionInput } from '../../../core/schema'
 
 export const palmSchema = {
   seed:            { type: 'integer',     default: 1,    min: 1,    max: 100,  label: 'Seed' },

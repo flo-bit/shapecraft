@@ -4,10 +4,12 @@ import { toThreeMesh } from '../src/three'
 import { plane } from '../src'
 import { fbm } from '../src/noise'
 import { heightGradient } from '../src/color'
-import { tree, treeSchema, treePresets } from '../src/generators/common-tree'
-import { pine, pineSchema, pinePresets } from '../src/generators/pine-tree'
-import { palm, palmSchema, palmPresets } from '../src/generators/palm-tree'
-import { bush, bushSchema, bushPresets } from '../src/generators/bush'
+import {
+  tree, treeSchema, treePresets,
+  pine, pineSchema, pinePresets,
+  palm, palmSchema, palmPresets,
+  bush, bushSchema, bushPresets,
+} from '../src/generators'
 import { createEditor } from './editor/editor'
 
 // --- Renderer ---

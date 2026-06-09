@@ -1,8 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { tree } from '../src/generators/common-tree'
-import { pine } from '../src/generators/pine-tree'
-import { palm } from '../src/generators/palm-tree'
-import { bush } from '../src/generators/bush'
+import { tree, pine, palm, bush } from '../src/generators'
 import type { Mesh } from '../src/core/mesh'
 
 const generators = [
