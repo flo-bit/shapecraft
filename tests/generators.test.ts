@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { tree, pine, palm, bush } from '../src/generators'
+import { tree, pine, palm, bush, grass, fern } from '../src/generators'
 import type { Mesh } from '../src/core/mesh'
 
 const generators = [
@@ -7,7 +7,12 @@ const generators = [
   { name: 'pine', gen: pine },
   { name: 'palm', gen: palm },
   { name: 'bush', gen: bush },
+  { name: 'grass', gen: grass },
+  { name: 'fern', gen: fern },
 ] as const
+
+// Generators that support snow (trees + shrubs). Grass/ferns don't take snow options.
+const snowGenerators = generators.filter((g) => ['tree', 'pine', 'palm', 'bush'].includes(g.name))
 
 // Golden snapshots captured after the named-stream RNG migration. A change here means
 // generator output shifted — intentional changes should update these numbers deliberately.
@@ -16,6 +21,8 @@ const golden: Record<string, { verts: number }> = {
   pine: { verts: 840 },
   palm: { verts: 3630 },
   bush: { verts: 3600 },
+  grass: { verts: 768 },
+  fern: { verts: 6480 },
 }
 
 function allFinite(m: Mesh): boolean {
@@ -52,7 +59,7 @@ describe.each(generators)('$name generator', ({ name, gen }) => {
 describe('stream independence at the model level', () => {
   // The headline benefit of named streams: a feature that only affects color (snow)
   // must not perturb geometry, because positions come from independent streams.
-  it.each(generators)('$name: painted snow (depth 0) leaves geometry byte-identical', ({ gen }) => {
+  it.each(snowGenerators)('$name: painted snow (depth 0) leaves geometry byte-identical', ({ gen }) => {
     const bare = gen({ seed: 3, snowColors: [] })
     const snowy = gen({ seed: 3, snowColors: ['#ffffff', '#eeeeee'] })
 
@@ -64,7 +71,7 @@ describe('stream independence at the model level', () => {
 })
 
 describe('geometric snow (snowDepth > 0)', () => {
-  it.each(generators)('$name: adds a snow layer of real geometry', ({ gen }) => {
+  it.each(snowGenerators)('$name: adds a snow layer of real geometry', ({ gen }) => {
     const bare = gen({ seed: 4, snowColors: [] })
     const snowy = gen({ seed: 4, snowColors: ['#eef0f5'], snowDepth: 0.08 })
     // The snow shell adds vertices on top of the model.
@@ -73,7 +80,7 @@ describe('geometric snow (snowDepth > 0)', () => {
     expect(snowy.boundingBox.max.y).toBeGreaterThan(bare.boundingBox.max.y)
   })
 
-  it.each(generators)('$name: geometric snow is deterministic', ({ gen }) => {
+  it.each(snowGenerators)('$name: geometric snow is deterministic', ({ gen }) => {
     const a = gen({ seed: 4, snowColors: ['#eef0f5'], snowDepth: 0.08 }).positions
     const b = gen({ seed: 4, snowColors: ['#eef0f5'], snowDepth: 0.08 }).positions
     expect(Array.from(a)).toEqual(Array.from(b))

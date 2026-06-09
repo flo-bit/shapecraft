@@ -9,8 +9,30 @@ import {
   pine, pineSchema, pinePresets,
   palm, palmSchema, palmPresets,
   bush, bushSchema, bushPresets,
+  grass, grassSchema, grassPresets,
+  fern, fernSchema, fernPresets,
 } from '../src/generators'
 import { createEditor } from './editor/editor'
+import type { OptionSchema } from '../src/core/schema'
+import type { Mesh } from '../src/core/mesh'
+
+// --- Generator registry: add a model here and it appears in the switcher + editor. ---
+interface GenEntry {
+  label: string
+  gen: (opts: Record<string, any>) => Mesh
+  schema: OptionSchema
+  presets: Record<string, Record<string, any>>
+  sizeKey: string   // which option the forest-scatter varies per instance
+  defaultSize: number
+}
+const GENERATORS: Record<string, GenEntry> = {
+  common: { label: 'Common', gen: tree, schema: treeSchema, presets: treePresets, sizeKey: 'height', defaultSize: 2.5 },
+  pine:   { label: 'Pine',   gen: pine, schema: pineSchema, presets: pinePresets, sizeKey: 'height', defaultSize: 3 },
+  palm:   { label: 'Palm',   gen: palm, schema: palmSchema, presets: palmPresets, sizeKey: 'height', defaultSize: 3.5 },
+  bush:   { label: 'Bush',   gen: bush, schema: bushSchema, presets: bushPresets, sizeKey: 'size',   defaultSize: 0.6 },
+  grass:  { label: 'Grass',  gen: grass, schema: grassSchema, presets: grassPresets, sizeKey: 'height', defaultSize: 0.6 },
+  fern:   { label: 'Fern',   gen: fern, schema: fernSchema, presets: fernPresets, sizeKey: 'length', defaultSize: 1.0 },
+}
 
 // --- Renderer ---
 const renderer = new THREE.WebGLRenderer({ antialias: true })
@@ -89,7 +111,7 @@ scene.add(groundObj)
 
 // --- Tree management ---
 let treeObjects: THREE.Mesh[] = []
-let activeGenerator: 'common' | 'pine' | 'palm' | 'bush' = 'common'
+let activeGenerator: keyof typeof GENERATORS | string = 'common'
 
 function clearTrees() {
   for (const obj of treeObjects) {
@@ -107,16 +129,8 @@ function rebuildTrees(opts: Record<string, any>) {
   let rngSeed = 42
   function rng() { rngSeed = (rngSeed * 16807) % 2147483647; return (rngSeed & 0x7fffffff) / 2147483647 }
 
-  const gen = activeGenerator === 'pine' ? pine
-    : activeGenerator === 'palm' ? palm
-    : activeGenerator === 'bush' ? bush
-    : tree
-  // Bushes are sized by `size`; the trees by `height`.
-  const sizeKey = activeGenerator === 'bush' ? 'size' : 'height'
-  const defaultSize = activeGenerator === 'bush' ? 0.6
-    : activeGenerator === 'pine' ? 3
-    : activeGenerator === 'palm' ? 3.5
-    : 2.5
+  const entry = GENERATORS[activeGenerator]
+  const { gen, sizeKey, defaultSize } = entry
 
   for (let i = 0; i < 15; i++) {
     const x = (rng() - 0.5) * 20
@@ -140,25 +154,23 @@ function rebuildTrees(opts: Record<string, any>) {
 // --- Editor with generator switcher ---
 let currentEditorEl: HTMLElement | null = null
 
-function mountEditor(type: 'common' | 'pine' | 'palm' | 'bush') {
+function mountEditor(type: string) {
   activeGenerator = type
   if (currentEditorEl) currentEditorEl.remove()
 
-  const schema = type === 'pine' ? pineSchema : type === 'palm' ? palmSchema : type === 'bush' ? bushSchema : treeSchema
-  const presets = type === 'pine' ? pinePresets : type === 'palm' ? palmPresets : type === 'bush' ? bushPresets : treePresets
-
-  currentEditorEl = createEditor(schema, {
+  const entry = GENERATORS[type]
+  currentEditorEl = createEditor(entry.schema, {
     onChange: (opts) => { rebuildTrees(opts) },
-  }, { presets })
+  }, { presets: entry.presets })
 
   // Add generator switcher at the top
   const switcher = document.createElement('div')
-  switcher.style.cssText = 'margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid #333; display: flex; gap: 4px;'
-  for (const t of ['common', 'pine', 'palm', 'bush'] as const) {
+  switcher.style.cssText = 'margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid #333; display: flex; flex-wrap: wrap; gap: 4px;'
+  for (const key of Object.keys(GENERATORS)) {
     const btn = document.createElement('button')
-    btn.textContent = t === 'common' ? 'Common' : t === 'pine' ? 'Pine' : t === 'palm' ? 'Palm' : 'Bush'
-    btn.style.cssText = `flex: 1; padding: 6px; border: 1px solid #444; background: ${t === type ? '#3a5a3a' : '#222'}; color: #ddd; cursor: pointer; font-size: 12px;`
-    btn.addEventListener('click', () => { if (t !== activeGenerator) mountEditor(t) })
+    btn.textContent = GENERATORS[key].label
+    btn.style.cssText = `flex: 1 1 30%; padding: 6px; border: 1px solid #444; background: ${key === type ? '#3a5a3a' : '#222'}; color: #ddd; cursor: pointer; font-size: 12px;`
+    btn.addEventListener('click', () => { if (key !== activeGenerator) mountEditor(key) })
     switcher.appendChild(btn)
   }
   currentEditorEl.prepend(switcher)

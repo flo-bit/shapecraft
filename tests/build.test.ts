@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { setup, trunk, foliageBlob, facetShade, heightShade, scatterOnSurface } from '../src/build'
+import { setup, trunk, foliageBlob, facetShade, heightShade, scatterOnSurface, blade } from '../src/build'
 import { sphere, box, plane } from '../src/primitives'
 import type { OptionSchema } from '../src/core/schema'
 import type { Vec3 } from '../src/core/types'
@@ -102,6 +102,33 @@ describe('heightShade', () => {
     const low = shade([0, 0, 0])
     const high = shade([0, 2, 0])
     expect(high[0]).toBeGreaterThan(low[0])
+  })
+})
+
+describe('blade', () => {
+  const path: Vec3[] = [
+    [0, 0, 0],
+    [0, 0.5, 0.1],
+    [0, 0.9, 0.3],
+    [0, 1.1, 0.6],
+  ]
+
+  it('builds a ribbon along the path', () => {
+    const m = blade(path, { width: 0.1 })
+    expect(m.vertexCount).toBeGreaterThan(0)
+    const p = m.positions
+    for (let i = 0; i < p.length; i++) expect(Number.isFinite(p[i])).toBe(true)
+  })
+
+  it('double-sided (default) has twice the triangles of single-sided', () => {
+    const two = blade(path, { width: 0.1 }).vertexCount
+    const one = blade(path, { width: 0.1, doubleSided: false }).vertexCount
+    expect(two).toBe(one * 2)
+  })
+
+  it('reaches the path extent', () => {
+    const m = blade(path, { width: 0.1 })
+    expect(m.boundingBox.max.y).toBeGreaterThan(1.0)
   })
 })
 
