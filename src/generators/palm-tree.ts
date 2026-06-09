@@ -6,7 +6,7 @@ import { paletteGradient, pickRandom } from '../color'
 import { UberNoise } from '../noise'
 import type { Mesh } from '../core/mesh'
 import type { Vec3 } from '../core/types'
-import type { OptionSchema } from '../core/schema'
+import type { OptionSchema, OptionInput } from '../core/schema'
 
 export const palmSchema = {
   seed:            { type: 'integer',     default: 1,    min: 1,    max: 100,  label: 'Seed' },
@@ -33,9 +33,7 @@ export const palmSchema = {
   coconutColor:    { type: 'color',       default: '#3a2810', label: 'Coconut Color' },
 } satisfies OptionSchema
 
-export type PalmOptions = {
-  [K in keyof typeof palmSchema]?: typeof palmSchema[K]['default']
-} & { preset?: string }
+export type PalmOptions = Partial<OptionInput<typeof palmSchema>> & { preset?: string }
 
 export const palmPresets: Record<string, Partial<PalmOptions>> = {
   default: {},
@@ -60,16 +58,22 @@ export const palmPresets: Record<string, Partial<PalmOptions>> = {
 }
 
 export function palm(options: PalmOptions = {}): Mesh {
-  const seed = options.seed ?? palmSchema.seed.default
-  const rand = createRng(seed)
-  const o = resolveOptions(palmSchema, options, palmPresets, rand)
+  const seedOpt = options.seed ?? palmSchema.seed.default
+  const seed = Array.isArray(seedOpt) ? seedOpt[0] : seedOpt
+  const rng = createRng(seed)
+  const o = resolveOptions(palmSchema, options, palmPresets, rng)
 
-  function subSeed() { return Math.floor(rand() * 2147483647) }
+  // Independent streams per concern (see common-tree for rationale).
+  const trunkRng = rng.stream('trunk')
+  const frondRng = rng.stream('fronds')
+  const colorRng = rng.stream('color')
+  const snowRng = rng.stream('snow')
+  const coconutRng = rng.stream('coconut')
 
   // --- Trunk path: curved from base to top ---
   const trunkHeight = o.height * 0.75
-  const baseRadius = o.trunkRadius * (1.3 + rand() * 0.4)
-  const curveAngle = rand() * Math.PI * 2
+  const baseRadius = o.trunkRadius * (1.3 + trunkRng() * 0.4)
+  const curveAngle = trunkRng() * Math.PI * 2
   const curveAmount = o.trunkCurve
   const curveDirX = Math.cos(curveAngle)
   const curveDirZ = Math.sin(curveAngle)
@@ -99,7 +103,7 @@ export function palm(options: PalmOptions = {}): Mesh {
     },
     o.trunkSegments,
   )
-    .jitter(baseRadius * 0.1, { seed: subSeed() })
+    .jitter(baseRadius * 0.1, { seed: trunkRng.seed() })
     .vertexColor((pos) => {
       const t = Math.max(0, Math.min(1, pos[1] / trunkHeight))
       return paletteGradient(o.trunkColors)(t)
@@ -110,24 +114,22 @@ export function palm(options: PalmOptions = {}): Mesh {
   const frondCount = o.fronds
   const frondGrad = paletteGradient(o.frondColors)
 
-  // Pre-allocate seeds
+  // Per-frond jitter seeds from the frond stream
   const maxFronds = 14
-  const frondSeeds = Array.from({ length: maxFronds }, () => subSeed())
-  const colorNoiseSeed = subSeed()
-  const snowNoiseSeed = subSeed()
+  const frondSeeds = Array.from({ length: maxFronds }, () => frondRng.seed())
 
-  const colorNoise = new UberNoise({ seed: colorNoiseSeed, scale: 1.5 })
+  const colorNoise = new UberNoise({ seed: colorRng.seed(), scale: 1.5 })
   const hasSnow = o.snowColors.length > 0
-  const snowNoise = hasSnow ? new UberNoise({ seed: snowNoiseSeed, scale: 2 }) : null
+  const snowNoise = hasSnow ? new UberNoise({ seed: snowRng.seed(), scale: 2 }) : null
   const snowThreshold = Math.sin(o.snowAngle * Math.PI / 180)
 
   for (let i = 0; i < frondCount; i++) {
-    const angle = (i / frondCount) * Math.PI * 2 + rand() * 0.5
-    const frondLen = o.frondLength * (0.5 + rand() * 0.7)
-    const droop = o.frondDroop * (0.3 + rand() * 1)
-    const curveUp = o.frondCurveUp * (0.5 + rand() * 1.5)
-    const width = o.frondWidth * (0.6 + rand() * 0.8)
-    const startAngleUp = rand() * 0.6  // some fronds point more upward
+    const angle = (i / frondCount) * Math.PI * 2 + frondRng() * 0.5
+    const frondLen = o.frondLength * (0.5 + frondRng() * 0.7)
+    const droop = o.frondDroop * (0.3 + frondRng() * 1)
+    const curveUp = o.frondCurveUp * (0.5 + frondRng() * 1.5)
+    const width = o.frondWidth * (0.6 + frondRng() * 0.8)
+    const startAngleUp = frondRng() * 0.6  // some fronds point more upward
 
     // Build frond path: starts at trunk top, arcs out and droops
     const frondPath: Vec3[] = []
@@ -177,11 +179,10 @@ export function palm(options: PalmOptions = {}): Mesh {
 
     // Color
     const base = frondGrad(i / frondCount)
-    const snow = pickRandom(hasSnow ? o.snowColors : o.frondColors, rand)
-    rand() // consume for stability
+    const snow = hasSnow ? pickRandom(o.snowColors, snowRng) : null
 
     const colored = frondMesh.faceColor((centroid, normal) => {
-      if (hasSnow && snowNoise) {
+      if (snow && snowNoise) {
         const n = snowNoise.get(centroid[0], centroid[1], centroid[2]) * 0.15
         if (normal[1] + n > snowThreshold) return snow
       }
@@ -198,13 +199,13 @@ export function palm(options: PalmOptions = {}): Mesh {
   const coconutParts: Mesh[] = []
   const coconutCount = o.coconuts
   for (let i = 0; i < coconutCount; i++) {
-    const angle = rand() * Math.PI * 2
+    const angle = coconutRng() * Math.PI * 2
     const topRadius = baseRadius * (1 - o.trunkTaper)
-    const dist = topRadius * (1.5 + rand() * 1)
-    const size = o.coconutSize * (0.7 + rand() * 0.6)
-    const hangY = size * (0.3 + rand() * 0.8)
+    const dist = topRadius * (1.5 + coconutRng() * 1)
+    const size = o.coconutSize * (0.7 + coconutRng() * 0.6)
+    const hangY = size * (0.3 + coconutRng() * 0.8)
     const coconut = sphere({ radius: size, widthSegments: 4, heightSegments: 3 })
-      .scale(0.9 + rand() * 0.2, 1 + rand() * 0.3, 0.9 + rand() * 0.2)
+      .scale(0.9 + coconutRng() * 0.2, 1 + coconutRng() * 0.3, 0.9 + coconutRng() * 0.2)
       .translate(
         topPt[0] + Math.cos(angle) * dist,
         topPt[1] - hangY,

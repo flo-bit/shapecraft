@@ -60,6 +60,21 @@ export type OptionValues<S extends OptionSchema> = {
 export type Randomizable<T> = T | [T, T]
 
 /**
+ * The *input* shape for a schema: like {@link OptionValues}, but numeric options also
+ * accept a `[min, max]` tuple (resolved to a number at generation time). Use this for a
+ * generator's public options type; use {@link OptionValues} for the resolved result.
+ */
+export type OptionInput<S extends OptionSchema> = {
+  [K in keyof S]: S[K] extends RangeOption ? Randomizable<number>
+    : S[K] extends IntegerOption ? Randomizable<number>
+    : S[K] extends ColorOption ? string
+    : S[K] extends ColorArrayOption ? string[]
+    : S[K] extends BooleanOption ? boolean
+    : S[K] extends SelectOption ? string
+    : never
+}
+
+/**
  * Resolve options for a generator: apply preset, then overrides, then fill schema defaults.
  * Numeric values can be [min, max] tuples — resolved using rand() if provided.
  */

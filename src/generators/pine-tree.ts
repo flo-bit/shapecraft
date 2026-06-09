@@ -5,7 +5,7 @@ import { resolveOptions } from '../core/schema'
 import { paletteGradient, pickRandom } from '../color'
 import { UberNoise } from '../noise'
 import type { Mesh } from '../core/mesh'
-import type { OptionSchema } from '../core/schema'
+import type { OptionSchema, OptionInput } from '../core/schema'
 
 export const pineSchema = {
   seed:           { type: 'integer',     default: 1,    min: 1,    max: 100,  label: 'Seed' },
@@ -35,9 +35,7 @@ export const pineSchema = {
   canopyColors:   { type: 'color-array', default: ['#0a2e12', '#0e3a18', '#144a22', '#1a5a2c'], min: 1, max: 8, label: 'Canopy Colors' },
 } satisfies OptionSchema
 
-export type PineOptions = {
-  [K in keyof typeof pineSchema]?: typeof pineSchema[K]['default']
-} & { preset?: string }
+export type PineOptions = Partial<OptionInput<typeof pineSchema>> & { preset?: string }
 
 export const pinePresets: Record<string, Partial<PineOptions>> = {
   default: {},
@@ -59,21 +57,27 @@ export const pinePresets: Record<string, Partial<PineOptions>> = {
 }
 
 export function pine(options: PineOptions = {}): Mesh {
-  const seed = options.seed ?? pineSchema.seed.default
-  const rand = createRng(seed)
-  const o = resolveOptions(pineSchema, options, pinePresets, rand)
+  const seedOpt = options.seed ?? pineSchema.seed.default
+  const seed = Array.isArray(seedOpt) ? seedOpt[0] : seedOpt
+  const rng = createRng(seed)
+  const o = resolveOptions(pineSchema, options, pinePresets, rng)
 
-  function subSeed() { return Math.floor(rand() * 2147483647) }
+  // Independent streams per concern (see common-tree for rationale).
+  const trunkRng = rng.stream('trunk')
+  const canopyRng = rng.stream('canopy')
+  const colorRng = rng.stream('color')
+  const snowRng = rng.stream('snow')
+  const swayRng = rng.stream('sway')
 
   // Trunk
-  const baseRadius = o.trunkRadius * (1.4 + rand() * 0.4)
+  const baseRadius = o.trunkRadius * (1.4 + trunkRng() * 0.4)
   const topRadius = o.trunkRadius * o.trunkTopScale
   const trunkHeight = o.height * o.trunkRatio
-  const leanX = (rand() - 0.5) * o.lean
-  const leanZ = (rand() - 0.5) * o.lean
+  const leanX = (trunkRng() - 0.5) * o.lean
+  const leanZ = (trunkRng() - 0.5) * o.lean
   const trunkGrad = paletteGradient(o.trunkColors)
 
-  const trunkNoise = new UberNoise({ seed: subSeed(), scale: o.trunkNoiseScale })
+  const trunkNoise = new UberNoise({ seed: trunkRng.seed(), scale: o.trunkNoiseScale })
   const trunk = cylinder({ radius: 1, radiusTop: 1, height: trunkHeight, segments: 5, heightSegments: 3 })
     .translate(0, trunkHeight / 2, 0)
     .warp((pos) => {
@@ -99,22 +103,20 @@ export function pine(options: PineOptions = {}): Mesh {
   const canopyHeight = o.height - canopyStart
   const layerCount = o.layers
 
-  // Pre-allocate all seeds unconditionally
-  const layerJitterSeeds = Array.from({ length: layerCount }, () => subSeed())
-  const colorNoiseSeed = subSeed()
-  const snowNoiseSeed = subSeed()
+  // Per-layer jitter seeds from the canopy stream
+  const layerJitterSeeds = Array.from({ length: layerCount }, () => canopyRng.seed())
 
   const canopyGrad = paletteGradient(o.canopyColors)
-  const colorNoise = new UberNoise({ seed: colorNoiseSeed, scale: o.colorNoiseScale })
+  const colorNoise = new UberNoise({ seed: colorRng.seed(), scale: o.colorNoiseScale })
   const hasSnow = o.snowColors.length > 0
-  const snowNoise = hasSnow ? new UberNoise({ seed: snowNoiseSeed, scale: 2 }) : null
+  const snowNoise = hasSnow ? new UberNoise({ seed: snowRng.seed(), scale: 2 }) : null
   const snowThreshold = Math.sin(o.snowAngle * Math.PI / 180)
 
   // Pre-compute layer sizes so we can stack proportionally
   const layerRadii: number[] = []
   const layerHeights: number[] = []
   for (let i = 0; i < layerCount; i++) {
-    const r = o.coneRadius * Math.pow(o.layerShrink, i) * (0.9 + rand() * 0.2)
+    const r = o.coneRadius * Math.pow(o.layerShrink, i) * (0.9 + canopyRng() * 0.2)
     layerRadii.push(r)
     layerHeights.push(r * o.coneHeight)
   }
@@ -139,9 +141,9 @@ export function pine(options: PineOptions = {}): Mesh {
     const lz = leanZ * lt * lt
 
     // Pyramid cone with height segments, quadratic curve, random tilt
-    const rotY = rand() * Math.PI * 2
-    const tiltX = (rand() - 0.5) * o.coneTilt
-    const tiltZ = (rand() - 0.5) * o.coneTilt
+    const rotY = canopyRng() * Math.PI * 2
+    const tiltX = (canopyRng() - 0.5) * o.coneTilt
+    const tiltZ = (canopyRng() - 0.5) * o.coneTilt
     let layer = cone({ radius: 1, height: layerH, segments: o.coneSides, heightSegments: 3 })
       .warp((pos) => {
         // Quadratic curve: wider at the base than a straight cone
@@ -157,11 +159,10 @@ export function pine(options: PineOptions = {}): Mesh {
 
     // Face color
     const base = canopyGrad(t)
-    rand() // consume to keep sequence stable (was pickRandom)
-    const snow = pickRandom(hasSnow ? o.snowColors : o.canopyColors, rand)
+    const snow = hasSnow ? pickRandom(o.snowColors, snowRng) : null
 
     layer = layer.faceColor((centroid, normal) => {
-      if (hasSnow && snowNoise) {
+      if (snow && snowNoise) {
         const n = snowNoise.get(centroid[0], centroid[1], centroid[2]) * 0.15
         if (normal[1] + n > snowThreshold) {
           return snow
@@ -178,8 +179,8 @@ export function pine(options: PineOptions = {}): Mesh {
   }
 
   // Noise-based sway: shift X/Z based on Y height for organic lean
-  const swayNoiseX = new UberNoise({ seed: subSeed(), scale: o.swayScale })
-  const swayNoiseZ = new UberNoise({ seed: subSeed(), scale: o.swayScale })
+  const swayNoiseX = new UberNoise({ seed: swayRng.seed(), scale: o.swayScale })
+  const swayNoiseZ = new UberNoise({ seed: swayRng.seed(), scale: o.swayScale })
 
   return merge(trunk, ...canopyParts)
     .warp((pos) => {

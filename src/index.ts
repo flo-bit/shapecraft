@@ -21,11 +21,12 @@ export { projectUVs } from './uv'
 
 // Utilities
 export { createRng } from './core/rng'
+export type { Rng } from './core/rng'
 export { scatterOnSphere } from './core/scatter'
 
 // Schema & options
 export { resolveOptions } from './core/schema'
-export type { OptionSchema, OptionDef, OptionValues, Randomizable } from './core/schema'
+export type { OptionSchema, OptionDef, OptionValues, OptionInput, Randomizable } from './core/schema'
 
 // Generators
 export { tree, treeSchema, treePresets } from './generators'

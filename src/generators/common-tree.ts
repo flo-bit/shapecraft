@@ -6,7 +6,7 @@ import { resolveOptions } from '../core/schema'
 import { paletteGradient, pickRandom, type Palette } from '../color'
 import { UberNoise } from '../noise'
 import type { Mesh } from '../core/mesh'
-import type { OptionSchema } from '../core/schema'
+import type { OptionSchema, OptionInput } from '../core/schema'
 
 export const treeSchema = {
   seed:           { type: 'integer',     default: 1,    min: 1,    max: 100,  label: 'Seed' },
@@ -31,9 +31,7 @@ export const treeSchema = {
   canopyColors:   { type: 'color-array', default: ['#1e6b10', '#2a7518', '#238020', '#2d8a1e'], min: 1, max: 8, label: 'Canopy Colors' },
 } satisfies OptionSchema
 
-export type TreeOptions = {
-  [K in keyof typeof treeSchema]?: typeof treeSchema[K]['default']
-} & { preset?: string }
+export type TreeOptions = Partial<OptionInput<typeof treeSchema>> & { preset?: string }
 
 export const treePresets: Record<string, Partial<TreeOptions>> = {
   default: {},
@@ -55,16 +53,21 @@ export const treePresets: Record<string, Partial<TreeOptions>> = {
 }
 
 export function tree(options: TreeOptions = {}): Mesh {
-  // Create rand from seed before resolving (needed for [min,max] ranges)
-  const seed = options.seed ?? treeSchema.seed.default
-  const rand = createRng(seed)
-  const o = resolveOptions(treeSchema, options, treePresets, rand)
+  // Create rng from seed before resolving (needed for [min,max] ranges)
+  const seedOpt = options.seed ?? treeSchema.seed.default
+  const seed = Array.isArray(seedOpt) ? seedOpt[0] : seedOpt
+  const rng = createRng(seed)
+  const o = resolveOptions(treeSchema, options, treePresets, rng)
 
-  // Derive all sub-seeds from the main rand so everything chains deterministically
-  function subSeed() { return Math.floor(rand() * 2147483647) }
+  // Independent streams per concern: drawing from one never perturbs another,
+  // so toggling (e.g.) snow can't shift the trunk or canopy randomness.
+  const trunkRng = rng.stream('trunk')
+  const canopyRng = rng.stream('canopy')
+  const colorRng = rng.stream('color')
+  const snowRng = rng.stream('snow')
 
   // Trunk radii — randomized within range
-  const baseRadius = o.trunkRadius * (1.6 + rand() * 0.8)
+  const baseRadius = o.trunkRadius * (1.6 + trunkRng() * 0.8)
   const topRadius = o.trunkRadius * o.trunkTopScale
 
   // Bigger trunk → bigger canopy
@@ -73,12 +76,12 @@ export function tree(options: TreeOptions = {}): Mesh {
 
   // Trunk
   const trunkHeight = o.height * o.trunkRatio
-  const leanX = (rand() - 0.5) * o.lean
-  const leanZ = (rand() - 0.5) * o.lean
+  const leanX = (trunkRng() - 0.5) * o.lean
+  const leanZ = (trunkRng() - 0.5) * o.lean
   const trunkGrad = paletteGradient(o.trunkColors)
   const taperExp = o.trunkTaper
 
-  const trunkNoise = new UberNoise({ seed: subSeed(), scale: 8 })
+  const trunkNoise = new UberNoise({ seed: trunkRng.seed(), scale: 8 })
   const trunk = cylinder({ radius: 1, radiusTop: 1, height: trunkHeight, segments: 5, heightSegments: 4 })
     .translate(0, trunkHeight / 2, 0)
     .warp((pos) => {
@@ -111,11 +114,11 @@ export function tree(options: TreeOptions = {}): Mesh {
   const mainR = actualCanopyRadius
   const edgeLen = o.canopyRadius * o.canopyDetail
 
-  const colorNoiseSeed = subSeed()
+  const colorNoiseSeed = colorRng.seed()
 
   function canopyBlob(r: number): Mesh {
-    const noiseSeed = subSeed()
-    const jitterSeed = subSeed()
+    const noiseSeed = canopyRng.seed()
+    const jitterSeed = canopyRng.seed()
     const noise = new UberNoise({ seed: noiseSeed, scale: 0.5, octaves: 3 })
     let blob = icosphere({ radius: r, subdivisions: 0 })
       .subdivideAdaptive(edgeLen)
@@ -134,16 +137,14 @@ export function tree(options: TreeOptions = {}): Mesh {
   const colorNoise = new UberNoise({ seed: colorNoiseSeed, scale: 1.5 })
 
   const hasSnow = o.snowColors.length > 0
-  const snowNoiseSeed = subSeed() // always consume to keep sequence stable
-  const snowNoise = hasSnow ? new UberNoise({ seed: snowNoiseSeed, scale: 2 }) : null
+  const snowNoise = hasSnow ? new UberNoise({ seed: snowRng.seed(), scale: 2 }) : null
   const snowThreshold = Math.sin(o.snowAngle * Math.PI / 180)
 
   function blobFaceColor(): (centroid: [number, number, number], normal: [number, number, number], faceIndex: number) => [number, number, number] {
-    // Pick colors upfront so we don't consume rand() calls inside the per-face loop
-    const base = pickRandom(o.canopyColors, rand)
-    // Always consume the rand() call to keep sequence stable regardless of snow setting
-    const snowPick = pickRandom(hasSnow ? o.snowColors : o.canopyColors, rand)
-    const snow = hasSnow ? snowPick : null
+    // Pick colors upfront so we don't draw inside the per-face loop. Each draw comes
+    // from its own stream, so snow being on/off never shifts the base canopy color.
+    const base = pickRandom(o.canopyColors, colorRng)
+    const snow = hasSnow ? pickRandom(o.snowColors, snowRng) : null
     return (centroid, normal) => {
       const top = normal[1] * 0.5 + 0.5
 
@@ -171,7 +172,7 @@ export function tree(options: TreeOptions = {}): Mesh {
   // Sub-blobs
   const blobCount = o.canopyBumps
   if (blobCount > 0) {
-    const blobPositions = scatterOnSphere(blobCount, subSeed(), {
+    const blobPositions = scatterOnSphere(blobCount, canopyRng.seed(), {
       radius: mainR * 0.9,
       polarMin: Math.PI * 0.3,
       polarMax: Math.PI * 0.7,
@@ -179,7 +180,7 @@ export function tree(options: TreeOptions = {}): Mesh {
 
     for (let i = 0; i < blobCount; i++) {
       const [bx, by, bz] = blobPositions[i]
-      const r = mainR * (o.bumpSize + rand() * 0.15)
+      const r = mainR * (o.bumpSize + canopyRng() * 0.15)
 
       const blob = canopyBlob(r)
         .scale(1, o.canopySquash, 1)

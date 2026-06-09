@@ -1,4 +1,4 @@
-import { interpolate, oklch, formatRgb, parse, converter } from 'culori'
+import { interpolate, formatRgb, parse, converter } from 'culori'
 import type { ColorInput, ColorFn, Vec3 } from '../core/types'
 import type { NoiseLike } from '../core/types'
 
@@ -106,12 +106,13 @@ export function varyColor(color: ColorInput, amount: number, rand: () => number)
   const base = toOklch({ mode: 'rgb', r: rgb[0], g: rgb[1], b: rgb[2] })
 
   return function varied(): [number, number, number] {
-    const varied = oklch({
+    const variedColor = {
+      mode: 'oklch' as const,
       l: Math.max(0, Math.min(1, (base.l ?? 0.5) + (rand() - 0.5) * amount)),
       c: Math.max(0, (base.c ?? 0.1) + (rand() - 0.5) * amount * 0.5),
       h: (base.h ?? 140) + (rand() - 0.5) * amount * 60,
-    })
-    const out = converter('rgb')(varied)
+    }
+    const out = converter('rgb')(variedColor)
     return [
       Math.max(0, Math.min(1, out.r)),
       Math.max(0, Math.min(1, out.g)),
