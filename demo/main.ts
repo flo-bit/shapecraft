@@ -13,7 +13,10 @@ import {
   fern, fernSchema, fernPresets,
   flower, flowerSchema, flowerPresets,
   deadTree, deadTreeSchema, deadTreePresets,
+  leafyTree, leafyTreeSchema, leafyTreePresets,
   rock, rockSchema, rockPresets,
+  sharpRock, sharpRockSchema, sharpRockPresets,
+  blockRock, blockRockSchema, blockRockPresets,
 } from '../src/generators'
 import { createEditor } from './editor/editor'
 import type { OptionSchema } from '../src/core/schema'
@@ -36,8 +39,11 @@ const GENERATORS: Record<string, GenEntry> = {
   grass:  { label: 'Grass',  gen: grass, schema: grassSchema, presets: grassPresets, sizeKey: 'height', defaultSize: 0.6 },
   fern:   { label: 'Fern',   gen: fern, schema: fernSchema, presets: fernPresets, sizeKey: 'length', defaultSize: 1.0 },
   flower: { label: 'Flower', gen: flower, schema: flowerSchema, presets: flowerPresets, sizeKey: 'height', defaultSize: 0.5 },
-  dead:   { label: 'Dead',   gen: deadTree, schema: deadTreeSchema, presets: deadTreePresets, sizeKey: 'height', defaultSize: 1.5 },
+  leafy:  { label: 'Leafy',  gen: leafyTree, schema: leafyTreeSchema, presets: leafyTreePresets, sizeKey: 'height', defaultSize: 2.5 },
+  dead:   { label: 'Dead',   gen: deadTree, schema: deadTreeSchema, presets: deadTreePresets, sizeKey: 'height', defaultSize: 3 },
   rock:   { label: 'Rock',   gen: rock, schema: rockSchema, presets: rockPresets, sizeKey: 'size', defaultSize: 0.6 },
+  sharp:  { label: 'Sharp',  gen: sharpRock, schema: sharpRockSchema, presets: sharpRockPresets, sizeKey: 'size', defaultSize: 1.0 },
+  block:  { label: 'Blocks', gen: blockRock, schema: blockRockSchema, presets: blockRockPresets, sizeKey: 'size', defaultSize: 0.7 },
 }
 
 // --- Renderer ---

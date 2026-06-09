@@ -26,8 +26,8 @@ export type { Rng } from './core/rng'
 export { scatterOnSphere } from './core/scatter'
 
 // Build — composable model primitives
-export { setup, trunk, foliageBlob, facetShade, heightShade, scatterOnSurface, blade, branches } from './build'
-export type { TrunkOptions, FoliageBlobOptions, FacetShadeOptions, SurfacePoint, ScatterOnSurfaceOptions, BladeOptions, BranchesOptions, BranchResult, BranchTip } from './build'
+export { setup, trunk, foliageBlob, facetShade, heightShade, scatterOnSurface, blade, branches, metaballs, surfaceNets } from './build'
+export type { TrunkOptions, FoliageBlobOptions, FacetShadeOptions, SurfacePoint, ScatterOnSurfaceOptions, BladeOptions, BranchesOptions, BranchResult, BranchTip, MetaBall, MetaballsOptions, SurfaceNetsOptions } from './build'
 
 // Schema & options
 export { resolveOptions } from './core/schema'
@@ -42,4 +42,7 @@ export { grass, grassSchema, grassPresets } from './generators'
 export { fern, fernSchema, fernPresets } from './generators'
 export { flower, flowerSchema, flowerPresets } from './generators'
 export { deadTree, deadTreeSchema, deadTreePresets } from './generators'
+export { leafyTree, leafyTreeSchema, leafyTreePresets } from './generators'
 export { rock, rockSchema, rockPresets } from './generators'
+export { sharpRock, sharpRockSchema, sharpRockPresets } from './generators'
+export { blockRock, blockRockSchema, blockRockPresets } from './generators'

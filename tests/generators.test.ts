@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { tree, pine, palm, bush, grass, fern, flower, deadTree, rock } from '../src/generators'
+import { tree, pine, palm, bush, grass, fern, flower, deadTree, leafyTree, rock, sharpRock, blockRock } from '../src/generators'
 import type { Mesh } from '../src/core/mesh'
 
 const generators = [
@@ -11,11 +11,14 @@ const generators = [
   { name: 'fern', gen: fern },
   { name: 'flower', gen: flower },
   { name: 'dead', gen: deadTree },
+  { name: 'leafy', gen: leafyTree },
   { name: 'rock', gen: rock },
+  { name: 'sharp', gen: sharpRock },
+  { name: 'block', gen: blockRock },
 ] as const
 
-// Generators that support snow (trees + shrubs). Grass/ferns don't take snow options.
-const snowGenerators = generators.filter((g) => ['tree', 'pine', 'palm', 'bush'].includes(g.name))
+// Generators that support snow (trees, shrubs, rocks). Grass/ferns don't take snow options.
+const snowGenerators = generators.filter((g) => ['tree', 'pine', 'palm', 'bush', 'leafy', 'rock', 'sharp', 'block'].includes(g.name))
 
 // Golden snapshots captured after the named-stream RNG migration. A change here means
 // generator output shifted — intentional changes should update these numbers deliberately.
@@ -28,7 +31,10 @@ const golden: Record<string, { verts: number }> = {
   fern: { verts: 6480 },
   flower: { verts: 654 },
   dead: { verts: 1400 },
+  leafy: { verts: 7020 },
   rock: { verts: 1440 },
+  sharp: { verts: 696 },
+  block: { verts: 432 },
 }
 
 function allFinite(m: Mesh): boolean {

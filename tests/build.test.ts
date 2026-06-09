@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { setup, trunk, foliageBlob, facetShade, heightShade, scatterOnSurface, blade, branches } from '../src/build'
+import { setup, trunk, foliageBlob, facetShade, heightShade, scatterOnSurface, blade, branches, metaballs, surfaceNets } from '../src/build'
 import { sphere, box, plane } from '../src/primitives'
 import type { OptionSchema } from '../src/core/schema'
 import type { Vec3 } from '../src/core/types'
@@ -165,6 +165,55 @@ describe('branches', () => {
     const shallow = branches({ ...opts, depth: 2 }).mesh.vertexCount
     const deep = branches({ ...opts, depth: 4 }).mesh.vertexCount
     expect(deep).toBeGreaterThan(shallow)
+  })
+})
+
+describe('surfaceNets', () => {
+  it('meshes a sphere SDF to roughly a unit sphere', () => {
+    const m = surfaceNets((x, y, z) => x * x + y * y + z * z, {
+      min: [-1.5, -1.5, -1.5], max: [1.5, 1.5, 1.5], resolution: 24, iso: 1, inside: 'below',
+    })
+    expect(m.vertexCount).toBeGreaterThan(0)
+    const bb = m.boundingBox
+    expect(bb.max.x).toBeGreaterThan(0.85)
+    expect(bb.max.x).toBeLessThan(1.15)
+    expect(bb.min.y).toBeLessThan(-0.85)
+  })
+
+  it('returns an empty mesh when the field never crosses the isolevel', () => {
+    const m = surfaceNets(() => 5, { min: [-1, -1, -1], max: [1, 1, 1], iso: 1, inside: 'below' })
+    expect(m.vertexCount).toBe(0)
+  })
+})
+
+describe('metaballs', () => {
+  it('returns an empty mesh for no balls', () => {
+    expect(metaballs([]).vertexCount).toBe(0)
+  })
+
+  it('a single ball produces a closed blob around its radius', () => {
+    const m = metaballs([{ center: [0, 0, 0], radius: 1 }], { resolution: 24 })
+    expect(m.vertexCount).toBeGreaterThan(0)
+    const bb = m.boundingBox
+    expect(bb.max.x).toBeGreaterThan(0.6)
+    expect(bb.max.x).toBeLessThan(1.6)
+  })
+
+  it('two nearby balls merge into one surface spanning both', () => {
+    const m = metaballs(
+      [{ center: [-0.8, 0, 0], radius: 0.8 }, { center: [0.8, 0, 0], radius: 0.8 }],
+      { resolution: 28 },
+    )
+    const bb = m.boundingBox
+    expect(bb.min.x).toBeLessThan(-0.8)
+    expect(bb.max.x).toBeGreaterThan(0.8)
+  })
+
+  it('is deterministic', () => {
+    const balls = [{ center: [0, 0, 0] as Vec3, radius: 1 }, { center: [0.5, 1, 0] as Vec3, radius: 0.7 }]
+    const a = metaballs(balls).positions
+    const b = metaballs(balls).positions
+    expect(Array.from(a)).toEqual(Array.from(b))
   })
 })
 
